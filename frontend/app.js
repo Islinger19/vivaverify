@@ -230,8 +230,6 @@ function showReport(r) {
       <div class="rrow-head"><span class="score">${q.score}/5</span><b>${esc(q.topic)}</b>
         ${q.followup_used ? '<span class="chip warn">needed a follow-up</span>' : ""}</div>
       <p class="muted">${esc(q.question)}</p>
-      ${q.missing.length ? `<div><b>Missing:</b> ${q.missing.map(esc).join("; ")}</div>` : ""}
-      ${q.reread.map((c) => `<blockquote><b>Re-read [${c.id}]</b> ${esc(c.excerpt)}</blockquote>`).join("")}
     </div>`).join("");
   $("rTranscript").innerHTML = session.evaluations.map((e) => `
     <div class="turn">

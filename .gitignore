@@ -9,5 +9,3 @@ __pycache__/
 .pytest_cache/
 *.pyc
 .vercel/
-# LLM response cache (rebuilt on demand)
-backend/cache/

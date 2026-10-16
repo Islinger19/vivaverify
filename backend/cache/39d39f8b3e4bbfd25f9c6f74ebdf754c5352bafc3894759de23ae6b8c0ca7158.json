@@ -1,0 +1,1 @@
+{"data": {"score": 5, "covered": ["HOG runs in real time on a Raspberry Pi 4 CPU", "The CNN detector took more than 3 seconds per frame"], "missing": [], "contradictions": [], "feedback": "Great job! You accurately explained why the HOG detector was chosen over the CNN detector for the Raspberry Pi.", "followup": null}, "provider": "gemini-backup"}
