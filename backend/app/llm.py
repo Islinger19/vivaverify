@@ -21,22 +21,25 @@ class LLMError(RuntimeError):
 
 
 def providers() -> list[dict]:
+    gemini = "https://generativelanguage.googleapis.com/v1beta/openai/"
     openrouter = "https://openrouter.ai/api/v1"
     groq = "https://api.groq.com/openai/v1"
     return [
-        # Groq first: fastest, and 1,000 free requests/day per model (8k tokens/min, so very long reports fall through)
-        {"name": "groq", "base_url": groq, "key": os.getenv("GROQ_API_KEY"),
-         "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"), "timeout": 30},
-        {"name": "groq-backup", "base_url": groq, "key": os.getenv("GROQ_API_KEY"),
-         "model": os.getenv("GROQ_BACKUP_MODEL", "qwen/qwen3.8-27b"), "timeout": 30},
-        {"name": "gemini", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
-         "key": os.getenv("GEMINI_API_KEY"), "model": os.getenv("GEMINI_MODEL", "gemini-flash-latest"), "timeout": 25},
+        {"name": "gemini", "base_url": gemini, "key": os.getenv("GEMINI_API_KEY"),
+         "model": os.getenv("GEMINI_MODEL", "gemini-3.5-flash"), "timeout": 25},
+        {"name": "gemini-backup", "base_url": gemini, "key": os.getenv("GEMINI_API_KEY"),
+         "model": os.getenv("GEMINI_BACKUP_MODEL", "gemini-flash-lite-latest"), "timeout": 30},
         {"name": "openrouter", "base_url": openrouter, "key": os.getenv("OPENROUTER_API_KEY"),
          "model": os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3.5-super-vl:free"), "timeout": 60},
         {"name": "openrouter-backup", "base_url": openrouter, "key": os.getenv("OPENROUTER_API_KEY"),
          "model": os.getenv("OPENROUTER_BACKUP_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"), "timeout": 60},
         {"name": "openrouter-auto", "base_url": openrouter, "key": os.getenv("OPENROUTER_API_KEY"),
          "model": "openrouter/free", "timeout": 60},
+        # Groq last: 1,000 free requests/day per model but only 8k tokens/min, so very long reports can overflow it
+        {"name": "groq", "base_url": groq, "key": os.getenv("GROQ_API_KEY"),
+         "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"), "timeout": 30},
+        {"name": "groq-backup", "base_url": groq, "key": os.getenv("GROQ_API_KEY"),
+         "model": os.getenv("GROQ_BACKUP_MODEL", "qwen/qwen3.8-27b"), "timeout": 30},
     ]
 
 

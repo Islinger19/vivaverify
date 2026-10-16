@@ -42,7 +42,7 @@ def test_fallback_skips_failing_providers_and_cools_them_down(monkeypatch):
 
         def create(self, model, **kw):
             calls.append(self.base_url)
-            if "openrouter" not in self.base_url:   # Groq and Gemini are "down"
+            if "openrouter" not in self.base_url:   # Gemini (first in line) is "down"
                 raise RuntimeError("429 rate limit / 503 high demand")
             msg = type("M", (), {"content": '{"ok": true}'})
             return type("R", (), {"choices": [type("C", (), {"message": msg})]})
@@ -53,6 +53,6 @@ def test_fallback_skips_failing_providers_and_cools_them_down(monkeypatch):
         monkeypatch.setenv(var, "x")
 
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
-    tried = len(calls)                       # groq, groq-backup, gemini, then openrouter
+    tried = len(calls)                       # gemini, gemini-backup, then openrouter
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
     assert len(calls) == tried + 1           # the failing providers were skipped while cooling down

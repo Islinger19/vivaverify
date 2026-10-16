@@ -22,7 +22,7 @@ planner -> examiner -> judge -> follow_up     -> examiner   (score < 3, max one 
 | Judge (LLM) | Scores 0-5 against the expected points; any contradiction with the report caps the score at 2 |
 | Router | Conditional edge: follow-up, next question, or final report |
 | Reporter | Deterministic scoring (follow-up recovery capped at 4/5), verdict and "re-read" excerpts |
-| LLM access | Direct calls to Groq, then Gemini, then OpenRouter (all OpenAI-compatible APIs); failing providers cool down for 5 min |
+| LLM access | Direct calls to Gemini, then OpenRouter, then Groq (all OpenAI-compatible APIs); failing providers cool down for 5 min |
 | Voice | Browser talks directly to Soniox real-time STT/TTS WebSockets with short-lived keys from the backend |
 
 ## Screens
