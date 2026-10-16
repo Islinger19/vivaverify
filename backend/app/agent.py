@@ -34,9 +34,10 @@ Plan a short oral viva that checks whether the student really understands THEIR 
 Return JSON only:
 {"questions": [{"topic": "2-4 words", "question": "...", "expected_points": ["...", "..."], "evidence": ["C3", "C7"]}]}
 Rules:
-- Exactly NUM questions. Each must be ONE question, never two joined together, under 30 words, natural to say out loud.
+- Exactly NUM questions. Each must be ONE question, never two joined with "and", under 30 words, natural to say out loud.
 - Cover different areas, in this order where possible: the problem and why it matters; a design choice and the reason for it; how a key part is implemented; testing, results or limitations.
-- Prefer "why" and "how" questions about this specific project over textbook definitions.
+- Ask at the level of a final-year university project viva: questions that need reasoning - why a choice was made, how a part works, what trade-off or alternative was considered, what a result shows or why it happened.
+- Never ask for a single number, a definition, or anything answerable with yes/no or one word. About results, ask what they show, not just the figures.
 - expected_points: 2-4 short facts a good answer must contain, taken only from the report.
 - evidence: ids of the chunks those facts come from."""
 
