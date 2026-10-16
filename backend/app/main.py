@@ -25,6 +25,8 @@ from . import agent, document, llm, voice  # noqa: E402
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 VOICE_TOKENS_PER_10_MIN = 10
 STRICTNESS = {"friendly": 2, "standard": 3, "strict": 4}   # pass mark out of 5
+BUSY_MESSAGE = ("The AI examiner is busy right now: every free AI model is overloaded or out of quota. "
+                "Please try again in a minute.")
 
 app = FastAPI(title="VivaVerify")
 app.add_middleware(CORSMiddleware, allow_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
@@ -77,8 +79,12 @@ async def relay(ws: WebSocket, session: str, graph_input) -> bool:
         try:
             for event in agent.run(session, graph_input):
                 loop.call_soon_threadsafe(queue.put_nowait, event)
+        except llm.LLMError as e:
+            print(f"LLM failure: {e}", flush=True)   # full detail stays in the server log
+            loop.call_soon_threadsafe(queue.put_nowait, {"type": "error", "message": BUSY_MESSAGE})
         except Exception as e:
-            loop.call_soon_threadsafe(queue.put_nowait, {"type": "error", "message": str(e)[:300]})
+            print(f"Viva error: {e!r}", flush=True)
+            loop.call_soon_threadsafe(queue.put_nowait, {"type": "error", "message": "Something went wrong - please try again."})
         loop.call_soon_threadsafe(queue.put_nowait, None)
 
     loop.run_in_executor(None, worker)

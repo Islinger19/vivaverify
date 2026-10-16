@@ -44,3 +44,19 @@ def test_voice_tokens_are_rate_limited(monkeypatch):
     main._token_log.clear()
     codes = [client.post("/api/voice-token").status_code for _ in range(main.VOICE_TOKENS_PER_10_MIN + 1)]
     assert codes[:-1] == [200] * main.VOICE_TOKENS_PER_10_MIN and codes[-1] == 429
+
+
+def test_llm_outage_shows_a_friendly_message(monkeypatch):
+    from app import llm
+
+    def down(*a, **k):
+        raise llm.LLMError("all LLM providers failed -> gemini: 503 | openrouter: 429")
+
+    monkeypatch.setattr(llm, "chat_json", down)
+    doc_id = client.post("/api/documents", data={"text": SAMPLE.read_text(encoding="utf-8")}).json()["doc_id"]
+    with client.websocket_connect("/ws/viva") as ws:
+        ws.send_json({"doc_id": doc_id})
+        event = ws.receive_json()
+        while event["type"] != "error":
+            event = ws.receive_json()
+    assert event["message"] == main.BUSY_MESSAGE

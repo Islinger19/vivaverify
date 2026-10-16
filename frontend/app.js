@@ -144,8 +144,13 @@ function handle(ev) {
   else if (ev.type === "report") showReport(ev);
   else if (ev.type === "error") {
     finished = true;
-    status(`Error: ${ev.message}`);
+    status(ev.message);
     $("planList").innerHTML = `<li class="error">${esc(ev.message)}</li>`;
+    const retry = $("beginBtn").cloneNode(true);   // a fresh button without the "Begin viva" handler
+    retry.disabled = false;
+    retry.textContent = "Try again";
+    retry.onclick = () => location.reload();
+    $("beginBtn").replaceWith(retry);
   }
 }
 

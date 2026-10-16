@@ -49,22 +49,35 @@ def extract_json(text: str) -> dict:
     return json.loads(match.group(0))
 
 
+def _ask(p: dict, system: str, user: str, temperature: float, errors: list) -> tuple[dict, str] | None:
+    try:
+        client = OpenAI(api_key=p["key"], base_url=p["base_url"], timeout=p["timeout"], max_retries=0)
+        resp = client.chat.completions.create(
+            model=p["model"], temperature=temperature,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        )
+        return extract_json(resp.choices[0].message.content), p["name"]
+    except ValueError as e:  # bad JSON: model quality issue, try the next one but don't cool down
+        errors.append(f"{p['name']}: {e}")
+    except Exception as e:  # provider unavailable: cool it down
+        _down_until[p["name"]] = time.time() + COOLDOWN_S
+        errors.append(f"{p['name']}: {str(e)[:150]}")
+    return None
+
+
 def chat_json(system: str, user: str, temperature: float = 0.2) -> tuple[dict, str]:
     """Return (parsed JSON reply, provider name) from the first provider that answers."""
-    errors = []
+    errors, cooling = [], []
     for p in providers():
-        if not p["key"] or _down_until.get(p["name"], 0) > time.time():
+        if not p["key"]:
             continue
-        try:
-            client = OpenAI(api_key=p["key"], base_url=p["base_url"], timeout=p["timeout"], max_retries=0)
-            resp = client.chat.completions.create(
-                model=p["model"], temperature=temperature,
-                messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-            )
-            return extract_json(resp.choices[0].message.content), p["name"]
-        except ValueError as e:  # bad JSON: model quality issue, try the next one but don't cool down
-            errors.append(f"{p['name']}: {e}")
-        except Exception as e:  # provider unavailable: cool it down
-            _down_until[p["name"]] = time.time() + COOLDOWN_S
-            errors.append(f"{p['name']}: {str(e)[:150]}")
+        if _down_until.get(p["name"], 0) > time.time():
+            cooling.append(p)
+            continue
+        if result := _ask(p, system, user, temperature, errors):
+            return result
+    for p in cooling:  # everything else failed: give the cooling-down providers one more chance
+        if result := _ask(p, system, user, temperature, errors):
+            _down_until.pop(p["name"], None)
+            return result
     raise LLMError("all LLM providers failed -> " + " | ".join(errors))

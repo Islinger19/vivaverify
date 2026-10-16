@@ -56,3 +56,24 @@ def test_fallback_skips_failing_providers_and_cools_them_down(monkeypatch):
     tried = len(calls)                       # gemini, gemini-backup, then openrouter
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
     assert len(calls) == tried + 1           # the failing providers were skipped while cooling down
+
+
+def test_cooling_down_providers_get_a_last_chance_when_all_else_fails(monkeypatch):
+    class FakeOpenAI:
+        def __init__(self, base_url, **kw):
+            self.base_url = base_url
+            self.chat = self
+            self.completions = self
+
+        def create(self, model, **kw):
+            if "openrouter" not in self.base_url:
+                raise RuntimeError("503")
+            msg = type("M", (), {"content": '{"ok": true}'})
+            return type("R", (), {"choices": [type("C", (), {"message": msg})]})
+
+    monkeypatch.setattr(llm, "OpenAI", FakeOpenAI)
+    for var in ("GEMINI_API_KEY", "OPENROUTER_API_KEY", "OLLAMA_API_KEY"):
+        monkeypatch.setenv(var, "x")
+    # OpenRouter is still cooling down from an earlier failure, but it has recovered and is the only one that works
+    monkeypatch.setattr(llm, "_down_until", {"openrouter": 9e12, "openrouter-backup": 9e12, "openrouter-auto": 9e12})
+    assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
