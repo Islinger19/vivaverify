@@ -1,0 +1,26 @@
+{
+  "spoken_text": "We added a liveness check based on blink detection. The eye aspect ratio is computed from facial landmarks, and a student is marked present only if they blink within three seconds, so printed photos and phone screens are rejected.",
+  "transcript": "We added a liveness check based on blink detection, the eye aspect ratio is computed from facial landmarks, and a student is marked present only if they blink within 3 seconds, so printed photos and phone screens are rejected.",
+  "word_similarity": 0.974,
+  "tts": {
+    "subprotocol_echoed": "soniox-api-key",
+    "first_audio_s": 1.64,
+    "total_s": 14.68,
+    "audio_s": 14.76
+  },
+  "stt": {
+    "subprotocol_echoed": "soniox-api-key",
+    "total_s": 14.31
+  },
+  "judge": {
+    "score": 5,
+    "provider": "openrouter",
+    "covered": [
+      "blink detection liveness check",
+      "eye aspect ratio from facial landmarks",
+      "must blink within 3 seconds / EAR below 0.21"
+    ],
+    "missing": [],
+    "feedback": "You correctly described the blink\u2011based liveness check, how the eye aspect ratio is used, and the requirement of a blink within three seconds to reject photos or phone screens."
+  }
+}

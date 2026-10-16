@@ -1,0 +1,10 @@
+fastapi==0.143.3
+uvicorn[standard]==0.54.0
+langgraph==1.2.15
+openai==3.31.0
+rank-bm25==0.2.2
+httpx==0.28.1
+python-dotenv==1.2.4
+pypdf==6.21.0
+python-multipart==0.0.32
+pytest==9.1.1

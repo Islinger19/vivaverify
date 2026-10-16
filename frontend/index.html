@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VivaVerify - AI viva examiner for your own project</title>
+  <meta name="description" content="Upload your project report and practise defending it in a spoken viva with an AI examiner.">
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="logo">V</span>VivaVerify</div>
+    <nav class="nav">
+      <button data-nav="setup" class="active">Practice</button>
+      <button data-nav="progress">My progress</button>
+      <button data-nav="how">How it works</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 1. Setup -->
+    <section id="setup" class="card narrow">
+      <h1>Practise your viva on <em>your</em> report</h1>
+      <p class="muted">Upload your project report. An AI examiner reads it, asks spoken questions about your own
+        design choices, follows up when an answer is weak, and shows exactly which part of your report to revise.</p>
+
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".pdf,.md,.txt">
+        <span id="dropText">Drop a PDF / MD / TXT here, or click to choose</span>
+      </label>
+      <details>
+        <summary>...or paste the text instead</summary>
+        <textarea id="paste" rows="6" placeholder="Paste your report text here"></textarea>
+      </details>
+
+      <div class="settings">
+        <label>Questions
+          <select id="numQ"><option>3</option><option selected>4</option><option>5</option></select>
+        </label>
+        <label>Examiner strictness
+          <select id="strict">
+            <option value="friendly">Friendly (pass mark 2/5)</option>
+            <option value="standard" selected>Standard (pass mark 3/5)</option>
+            <option value="strict">Strict (pass mark 4/5)</option>
+          </select>
+        </label>
+        <label>Answer language
+          <select id="lang"><option value="en">English</option><option value="hi">Hindi / Hinglish</option></select>
+        </label>
+        <label class="check"><input type="checkbox" id="voiceOn" checked> Voice mode (spoken questions, mic answers)</label>
+      </div>
+      <button id="startBtn" class="primary big">Analyse my report</button>
+      <p id="setupMsg" class="msg"></p>
+    </section>
+
+    <!-- 2. Report analysed -->
+    <section id="analysed" hidden>
+      <div class="card">
+        <h2>Your report, as the examiner sees it</h2>
+        <div class="tiles" id="docTiles"></div>
+      </div>
+      <div class="layout">
+        <div class="card">
+          <h3>Sections indexed for retrieval</h3>
+          <p class="muted small-text">The report is split into numbered chunks. The judge looks answers up in these
+            chunks; chunks marked <span class="chip">evidence</span> back a planned question.</p>
+          <ol id="chunkList" class="chunks"></ol>
+        </div>
+        <aside class="card">
+          <h3>Viva plan</h3>
+          <p class="muted small-text">Topics chosen by the planner. The questions stay hidden until they are asked.</p>
+          <ol id="planList" class="plan"><li class="muted">Examiner is reading your report...</li></ol>
+          <p id="planMeta" class="muted small-text"></p>
+          <button id="beginBtn" class="primary big" disabled>Preparing...</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- 3. Viva -->
+    <section id="viva" class="layout" hidden>
+      <div class="card">
+        <div id="qDots" class="dots"></div>
+        <div class="qhead">
+          <span id="qCounter" class="muted"></span>
+          <span id="qTopic" class="chip"></span>
+          <span id="qFollow" class="chip warn" hidden>Follow-up</span>
+        </div>
+        <h2 id="qText"></h2>
+        <button id="replayBtn" class="ghost small" hidden>Replay question</button>
+
+        <div class="answer">
+          <textarea id="answer" rows="5" placeholder="Answer with the mic or type here" disabled></textarea>
+          <div id="live" class="live" aria-live="polite"></div>
+          <div class="row">
+            <button id="micBtn" class="mic" disabled>Start speaking</button>
+            <button id="sendBtn" class="primary" disabled>Submit answer</button>
+            <span id="status" class="muted"></span>
+          </div>
+        </div>
+        <div id="evals"></div>
+      </div>
+
+      <aside class="card">
+        <h3>Agent activity</h3>
+        <ol id="trace" class="trace"></ol>
+      </aside>
+    </section>
+
+    <!-- 4. Result -->
+    <section id="report" class="card narrow" hidden>
+      <div class="score-head">
+        <div id="rPercent" class="big-score"></div>
+        <div>
+          <h2 id="rVerdict"></h2>
+          <p id="rFlags" class="flag-line"></p>
+        </div>
+      </div>
+      <div class="tiles" id="rTiles"></div>
+      <div class="tabs">
+        <button data-tab="rSummary" class="active">Summary</button>
+        <button data-tab="rTranscript">Full transcript</button>
+      </div>
+      <div id="rSummary"></div>
+      <div id="rTranscript" hidden></div>
+      <div class="row">
+        <button class="primary" onclick="location.reload()">Practise again</button>
+        <button class="ghost" data-nav="progress">View my progress</button>
+        <button class="ghost" onclick="window.print()">Print / save as PDF</button>
+      </div>
+    </section>
+
+    <!-- 5. Progress -->
+    <section id="progress" hidden>
+      <div class="card">
+        <h2>My progress</h2>
+        <p class="muted small-text">Saved only in this browser. Nothing about your answers is stored on the server.</p>
+        <div id="progressEmpty" class="empty" hidden>No vivas yet. Practise once and your scores will appear here.</div>
+        <div class="tiles" id="pTiles"></div>
+      </div>
+      <div id="progressBody" class="layout">
+        <div class="card">
+          <h3>Score per attempt</h3>
+          <div id="chart" class="chart"></div>
+        </div>
+        <aside class="card">
+          <h3>Topics to work on</h3>
+          <p class="muted small-text">Average score per topic across attempts, weakest first.</p>
+          <div id="topicMeters"></div>
+        </aside>
+      </div>
+      <div class="card" id="historyCard">
+        <h3>All attempts</h3>
+        <table class="history"><thead><tr><th>Date</th><th>Report</th><th>Questions</th><th>Strictness</th>
+          <th class="num">Score</th><th>Verdict</th></tr></thead><tbody id="historyRows"></tbody></table>
+        <button id="clearBtn" class="ghost small">Clear history</button>
+      </div>
+    </section>
+
+    <!-- 6. How it works -->
+    <section id="how" class="card narrow" hidden>
+      <h2>How VivaVerify works</h2>
+      <ol class="steps">
+        <li><b>Upload.</b> Your report is split into short numbered chunks and indexed with BM25 keyword search.</li>
+        <li><b>Plan.</b> A planner LLM reads the whole report and picks questions on the problem, a design choice,
+          the implementation and the results, each linked to the chunks that hold the answer.</li>
+        <li><b>Ask.</b> The examiner speaks each question and pauses until you answer, by voice or keyboard.</li>
+        <li><b>Judge and follow up.</b> Rule-based guardrails run first; then a judge LLM compares your answer with
+          your own report. A weak answer gets one follow-up on the most important missing point.</li>
+        <li><b>Report.</b> Your score is calculated by code, not by the LLM, and every weak answer points to the
+          section you should re-read.</li>
+      </ol>
+      <img src="assets/agent_workflow.png" alt="Agent workflow: planner, examiner, judge, router, follow-up, reporter" class="diagram">
+      <h3>What happens to your data</h3>
+      <ul>
+        <li>Your report is kept in server memory for the session only and is never written to disk.</li>
+        <li>Voice goes straight from your browser to the speech service using a short-lived key.</li>
+        <li>Your progress history is stored only in this browser.</li>
+      </ul>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+  <footer>Practice tool: scores are guidance from an AI examiner, not an official grade.</footer>
+</body>
+</html>
