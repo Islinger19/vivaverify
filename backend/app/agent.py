@@ -25,8 +25,11 @@ PASS_SCORE = 3      # default out of 5 ("standard"); below this the router asks 
 FOLLOWUP_CAP = 4    # a follow-up can raise a question's score, but not to full marks
 
 # Deterministic guardrails: run before the LLM judge, so they cannot be talked out of.
-MANIPULATION = re.compile(r"ignore (all |the |your )?(previous|above|prior|earlier)|system prompt|full marks|"
-                          r"give (me )?(a )?(5|five|max|maximum)|you are now|act as|disregard", re.I)
+# Aimed at instructions to the examiner. Ordinary phrasing such as "the LLM acts as a judge" must not match.
+MANIPULATION = re.compile(r"\b(ignore|disregard|forget) (all |the |your |any )?(previous|above|prior|earlier|system) "
+                          r"(instructions?|prompts?|rules?)|\bsystem prompt\b|\bfull marks\b|"
+                          r"\b(give|award) me (a |the )?(5|five|max|maximum|top)\b|\byou are now\b|\bpretend (to be|you are)\b",
+                          re.I)
 NO_ANSWER = re.compile(r"^\W*(i\s*(don'?t|do not)\s*know|no idea|not sure|pass|skip|pata nahi|nahi pata)?\W*$", re.I)
 
 PLANNER_SYSTEM = """You are a strict university viva examiner. You receive a student's project report split into numbered chunks [C1], [C2], ...
