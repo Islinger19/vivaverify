@@ -96,7 +96,7 @@ async function fetchJson(url, options) {
 function renderAnalysed(doc) {
   const s = session.settings;
   $("docTiles").innerHTML = tiles([
-    ["Report", doc.title], ["Words", doc.words], ["Chunks indexed", doc.chunks],
+    ["Report", doc.title], ["Words", doc.words], ["Sections", doc.chunks],
     ["Questions", s.questions], ["Strictness", cap(s.strictness)],
   ]);
   $("chunkList").innerHTML = doc.outline.map((c) =>
@@ -324,16 +324,16 @@ function renderProgress() {
   $("improveSummary").innerHTML = tiles([
     ["Report", data.title],
     ["Latest score", `${data.percent}%`, data.verdict],
-    ["Areas to revise", gaps.length === 0 ? "All clear - strong!" : `${gaps.length} of ${data.items.length} questions need work`],
+    ["To revise", gaps.length === 0 ? "Nothing - well done" : `${gaps.length} of ${data.items.length} questions`],
   ]);
 
   $("improveList").innerHTML = data.items.map((it) => {
     const badgeClass = it.score >= 4 ? "good" : it.score >= 3 ? "mid" : "low";
-    const statusText = it.score >= 4 ? "Solid grasp" : it.score >= 3 ? "Partial - gaps to fix" : "Weak - revise thoroughly";
+    const statusText = it.score >= 4 ? "Well defended" : it.score >= 3 ? "Some gaps" : "Revise this";
 
     const missingHtml = it.missing && it.missing.length ? `
       <div class="improve-block">
-        <div class="improve-title warn">Expected points you missed:</div>
+        <div class="improve-title warn">Points you missed</div>
         <ul class="improve-list">
           ${it.missing.map((m) => `<li>${esc(m)}</li>`).join("")}
         </ul>
@@ -341,7 +341,7 @@ function renderProgress() {
 
     const contradictionsHtml = it.contradictions && it.contradictions.length ? `
       <div class="improve-block">
-        <div class="improve-title error">Contradicted your report:</div>
+        <div class="improve-title error">Conflicts with your report</div>
         <ul class="improve-list error">
           ${it.contradictions.map((c) => `<li>${esc(c)}</li>`).join("")}
         </ul>
@@ -349,13 +349,13 @@ function renderProgress() {
 
     const feedbackHtml = it.feedback ? `
       <div class="improve-block">
-        <div class="improve-title">Examiner advice:</div>
+        <div class="improve-title">Examiner's comment</div>
         <p class="improve-text">${esc(it.feedback)}</p>
       </div>` : "";
 
     const rereadHtml = it.reread && it.reread.length ? `
       <div class="improve-block">
-        <div class="improve-title info">Exact sections to re-read in your report:</div>
+        <div class="improve-title info">Sections to read again</div>
         ${it.reread.map((r) => `<blockquote><b>Section [${esc(r.id)}]</b> ${esc(r.excerpt)}</blockquote>`).join("")}
       </div>` : "";
 

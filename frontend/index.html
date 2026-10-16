@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VivaVerify - AI viva examiner for your own project</title>
+  <title>VivaVerify - viva practice on your own report</title>
   <meta name="description" content="Upload your project report and practise defending it in a spoken viva with an AI examiner.">
   <link rel="stylesheet" href="style.css">
   <script src="config.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body>
   <header class="top">
-    <div class="brand"><span class="logo">V</span>VivaVerify</div>
+    <div class="brand">VivaVerify<small>viva practice on your own report</small></div>
     <nav class="nav">
       <button data-nav="setup" class="active">Practice</button>
       <button data-nav="progress">How to improve</button>
@@ -22,16 +22,16 @@
   <main>
     <!-- 1. Setup -->
     <section id="setup" class="card narrow">
-      <h1>Practise your viva on <em>your</em> report</h1>
-      <p class="muted">Upload your project report. An AI examiner reads it, asks spoken questions about your own
-        design choices, follows up when an answer is weak, and shows exactly which part of your report to revise.</p>
+      <h1>Practise your project viva</h1>
+      <p class="lede">Upload your report. The examiner reads it, asks you about your own design choices, presses on
+        an answer that is thin, and tells you which sections to revise before the real viva.</p>
 
       <label class="drop" id="drop">
         <input type="file" id="file" accept=".pdf,.md,.txt">
-        <span id="dropText">Drop a PDF / MD / TXT here, or click to choose</span>
+        <span id="dropText">Drop a PDF, MD or TXT file here, or click to choose one</span>
       </label>
       <details>
-        <summary>...or paste the text instead</summary>
+        <summary>Or paste the text instead</summary>
         <textarea id="paste" rows="6" placeholder="Paste your report text here"></textarea>
       </details>
 
@@ -49,28 +49,28 @@
         <label>Answer language
           <select id="lang"><option value="en">English</option><option value="hi">Hindi / Hinglish</option></select>
         </label>
-        <label class="check"><input type="checkbox" id="voiceOn" checked> Voice mode (spoken questions, mic answers)</label>
+        <label class="check"><input type="checkbox" id="voiceOn" checked> Voice mode: questions are read aloud and you answer with the mic</label>
       </div>
-      <button id="startBtn" class="primary big">Analyse my report</button>
+      <button id="startBtn" class="primary big">Read my report</button>
       <p id="setupMsg" class="msg"></p>
     </section>
 
     <!-- 2. Report analysed -->
     <section id="analysed" hidden>
       <div class="card">
-        <h2>Your report, as the examiner sees it</h2>
+        <h2>Your report, as the examiner read it</h2>
         <div class="tiles" id="docTiles"></div>
       </div>
       <div class="layout">
         <div class="card">
-          <h3>Sections indexed for retrieval</h3>
-          <p class="muted small-text">The report is split into numbered chunks. The judge looks answers up in these
-            chunks; chunks marked <span class="chip">evidence</span> back a planned question.</p>
+          <h3>Sections</h3>
+          <p class="muted small-text">Your report split into numbered sections. Answers are checked against these;
+            sections marked <span class="chip">evidence</span> back a planned question.</p>
           <ol id="chunkList" class="chunks"></ol>
         </div>
         <aside class="card">
-          <h3>Viva plan</h3>
-          <p class="muted small-text">Topics chosen by the planner. The questions stay hidden until they are asked.</p>
+          <h3>Topics</h3>
+          <p class="muted small-text">What the examiner will ask about. The questions themselves stay hidden until asked.</p>
           <ol id="planList" class="plan"><li class="muted">Examiner is reading your report...</li></ol>
           <p id="planMeta" class="muted small-text"></p>
           <button id="beginBtn" class="primary big" disabled>Preparing...</button>
@@ -91,7 +91,7 @@
         <button id="replayBtn" class="ghost small" hidden>Replay question</button>
 
         <div class="answer">
-          <textarea id="answer" rows="5" placeholder="Answer with the mic or type here" disabled></textarea>
+          <textarea id="answer" rows="5" placeholder="Speak or type your answer" disabled></textarea>
           <div id="live" class="live" aria-live="polite"></div>
           <div class="row">
             <button id="micBtn" class="mic" disabled>Start speaking</button>
@@ -104,7 +104,7 @@
       </div>
 
       <aside class="card">
-        <h3>Agent activity</h3>
+        <h3>Examiner's log</h3>
         <ol id="trace" class="trace"></ol>
       </aside>
     </section>
@@ -136,9 +136,9 @@
     <section id="progress" hidden>
       <div class="card">
         <h2>How to improve</h2>
-        <p class="muted small-text">Specific points you missed and exact sections from your report to study before your real viva.</p>
-        <div id="progressEmpty" class="empty">No viva completed yet. Practise once and your personalized improvement guide will appear here.</div>
-        <div id="improveSummary" hidden></div>
+        <p class="muted small-text">What you missed in your last practice viva, and the sections of your report to read again.</p>
+        <div id="progressEmpty" class="empty">Nothing here yet. Finish one practice viva and your notes will appear here.</div>
+        <div id="improveSummary" class="tiles" hidden></div>
       </div>
       <div id="improveList"></div>
     </section>
@@ -168,6 +168,6 @@
     </section>
   </main>
 
-  <footer>Practice tool: scores are guidance from an AI examiner, not an official grade.</footer>
+  <footer>A practice tool. Scores come from an AI examiner and are a guide, not an official grade.</footer>
 </body>
 </html>
