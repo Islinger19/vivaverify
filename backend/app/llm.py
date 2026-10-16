@@ -4,16 +4,27 @@ Providers are tried in order. A provider that errors (rate limit, 503 "high dema
 timeout) is skipped for COOLDOWN_S seconds, so a congested free tier does not slow
 down every answer of a viva (a viva lasts a few minutes).
 """
+import hashlib
 import json
 import os
 import re
 import time
+from pathlib import Path
 
 from openai import OpenAI
 
 COOLDOWN_S = 300
 
 _down_until: dict[str, float] = {}
+
+# Response cache: an identical request (same report for the planner, same answer for the judge) is answered from
+# disk instead of spending free-tier quota again. Shown in the agent trace as "cache (provider)". LLM_CACHE=0 disables it.
+CACHE_DIR = Path(__file__).resolve().parents[1] / "cache"
+
+
+def _cache_path(system: str, user: str, temperature: float) -> Path:
+    key = hashlib.sha256(json.dumps([system, user, temperature]).encode("utf-8")).hexdigest()
+    return CACHE_DIR / f"{key}.json"
 
 
 class LLMError(RuntimeError):
@@ -66,7 +77,26 @@ def _ask(p: dict, system: str, user: str, temperature: float, errors: list) -> t
 
 
 def chat_json(system: str, user: str, temperature: float = 0.2) -> tuple[dict, str]:
-    """Return (parsed JSON reply, provider name) from the first provider that answers."""
+    """Return (parsed JSON reply, provider name) from the cache or the first provider that answers."""
+    use_cache = os.getenv("LLM_CACHE", "1") != "0"
+    path = _cache_path(system, user, temperature)
+    if use_cache and path.exists():
+        try:
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            return saved["data"], f"cache ({saved['provider']})"
+        except (OSError, ValueError, KeyError):
+            pass   # unreadable cache entry: ask a model instead
+    result = _ask_providers(system, user, temperature)
+    if use_cache:
+        try:
+            CACHE_DIR.mkdir(exist_ok=True)
+            path.write_text(json.dumps({"data": result[0], "provider": result[1]}), encoding="utf-8")
+        except OSError:
+            pass
+    return result
+
+
+def _ask_providers(system: str, user: str, temperature: float) -> tuple[dict, str]:
     errors, cooling = [], []
     for p in providers():
         if not p["key"]:

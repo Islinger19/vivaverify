@@ -53,3 +53,9 @@ def fake_llm(monkeypatch):
 @pytest.fixture
 def graph():
     return agent.build_graph()
+
+
+@pytest.fixture(autouse=True)
+def isolated_llm_cache(tmp_path, monkeypatch):
+    """Every test gets an empty response cache, so results never leak between tests."""
+    monkeypatch.setattr(llm, "CACHE_DIR", tmp_path / "cache")

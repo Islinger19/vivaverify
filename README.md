@@ -23,6 +23,7 @@ planner -> examiner -> judge -> follow_up     -> examiner   (score < 3, max one 
 | Router | Conditional edge: follow-up, next question, or final report |
 | Reporter | Deterministic scoring (follow-up recovery capped at 4/5), verdict and "re-read" excerpts |
 | LLM access | Direct calls to Gemini, then OpenRouter, then Ollama Cloud (Gemma 4 31B), all OpenAI-compatible APIs; failing providers cool down for 5 min |
+| Response cache | An identical request (same report, same answer) is answered from `backend/cache/` instead of spending free-tier quota; the agent trace shows it as `cache (provider)`. `LLM_CACHE=0` turns it off |
 | Voice | Browser talks directly to Soniox real-time STT/TTS WebSockets with short-lived keys from the backend |
 
 ## Screens
@@ -46,7 +47,7 @@ Open http://localhost:8000 (FastAPI also serves `frontend/` locally).
 ## Tests and evaluation
 
 ```bash
-.venv/Scripts/python -m pytest -q            # 22 offline tests, fake LLM, no API calls
+.venv/Scripts/python -m pytest -q            # 23 offline tests, fake LLM, no API calls
 .venv/Scripts/python eval/run_eval.py        # live judge accuracy + simulated students (~25 LLM calls)
 .venv/Scripts/python eval/voice_roundtrip.py # one Soniox TTS -> STT -> judge round trip
 python eval/ui_demo.py                       # two real vivas in Edge, screenshots of every screen (server must run)

@@ -54,7 +54,7 @@ def test_fallback_skips_failing_providers_and_cools_them_down(monkeypatch):
 
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
     tried = len(calls)                       # gemini, gemini-backup, then openrouter
-    assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
+    assert llm.chat_json("s", "a different question") == ({"ok": True}, "openrouter")
     assert len(calls) == tried + 1           # the failing providers were skipped while cooling down
 
 
@@ -77,3 +77,26 @@ def test_cooling_down_providers_get_a_last_chance_when_all_else_fails(monkeypatc
     # OpenRouter is still cooling down from an earlier failure, but it has recovered and is the only one that works
     monkeypatch.setattr(llm, "_down_until", {"openrouter": 9e12, "openrouter-backup": 9e12, "openrouter-auto": 9e12})
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
+
+
+def test_identical_requests_are_served_from_the_cache(monkeypatch):
+    calls = []
+
+    class FakeOpenAI:
+        def __init__(self, base_url, **kw):
+            self.chat = self
+            self.completions = self
+
+        def create(self, model, **kw):
+            calls.append(model)
+            msg = type("M", (), {"content": '{"score": 4}'})
+            return type("R", (), {"choices": [type("C", (), {"message": msg})]})
+
+    monkeypatch.setattr(llm, "OpenAI", FakeOpenAI)
+    monkeypatch.setattr(llm, "_down_until", {})
+    monkeypatch.setenv("GEMINI_API_KEY", "x")
+    first = llm.chat_json("judge", "answer A")
+    again = llm.chat_json("judge", "answer A")
+    other = llm.chat_json("judge", "answer B")
+    assert first == ({"score": 4}, "gemini") and again == ({"score": 4}, "cache (gemini)")
+    assert other[1] == "gemini" and len(calls) == 2   # a different answer is graded fresh
