@@ -14,7 +14,7 @@
     <div class="brand"><span class="logo">V</span>VivaVerify</div>
     <nav class="nav">
       <button data-nav="setup" class="active">Practice</button>
-      <button data-nav="progress">My progress</button>
+      <button data-nav="progress">How to improve</button>
       <button data-nav="how">How it works</button>
     </nav>
   </header>
@@ -126,36 +126,20 @@
       <div id="rTranscript" hidden></div>
       <div class="row">
         <button class="primary" onclick="location.reload()">Practise again</button>
-        <button class="ghost" data-nav="progress">View my progress</button>
+        <button class="ghost" data-nav="progress">How to improve</button>
         <button class="ghost" onclick="window.print()">Print / save as PDF</button>
       </div>
     </section>
 
-    <!-- 5. Progress -->
+    <!-- 5. How to improve -->
     <section id="progress" hidden>
       <div class="card">
-        <h2>My progress</h2>
-        <p class="muted small-text">Saved only in this browser. Nothing about your answers is stored on the server.</p>
-        <div id="progressEmpty" class="empty" hidden>No vivas yet. Practise once and your scores will appear here.</div>
-        <div class="tiles" id="pTiles"></div>
+        <h2>How to improve</h2>
+        <p class="muted small-text">Specific points you missed and exact sections from your report to study before your real viva.</p>
+        <div id="progressEmpty" class="empty">No viva completed yet. Practise once and your personalized improvement guide will appear here.</div>
+        <div id="improveSummary" hidden></div>
       </div>
-      <div id="progressBody" class="layout">
-        <div class="card">
-          <h3>Score per attempt</h3>
-          <div id="chart" class="chart"></div>
-        </div>
-        <aside class="card">
-          <h3>Topics to work on</h3>
-          <p class="muted small-text">Average score per topic across attempts, weakest first.</p>
-          <div id="topicMeters"></div>
-        </aside>
-      </div>
-      <div class="card" id="historyCard">
-        <h3>All attempts</h3>
-        <table class="history"><thead><tr><th>Date</th><th>Report</th><th>Questions</th><th>Strictness</th>
-          <th class="num">Score</th><th>Verdict</th></tr></thead><tbody id="historyRows"></tbody></table>
-        <button id="clearBtn" class="ghost small">Clear history</button>
-      </div>
+      <div id="improveList"></div>
     </section>
 
     <!-- 6. How it works -->
@@ -176,12 +160,10 @@
       <ul>
         <li>Your report is kept in server memory for the session only and is never written to disk.</li>
         <li>Voice goes straight from your browser to the speech service using a short-lived key.</li>
-        <li>Your progress history is stored only in this browser.</li>
       </ul>
     </section>
   </main>
 
-  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
   <footer>Practice tool: scores are guidance from an AI examiner, not an official grade.</footer>
 </body>
 </html>

@@ -8,7 +8,7 @@ const WS_BASE = (API || location.origin).replace(/^http/, "ws");
 const SONIOX_STT = "wss://stt-rt.soniox.com/transcribe-websocket";
 const SONIOX_TTS = "wss://tts-rt.soniox.com/tts-websocket";
 const TTS_RATE = 24000;
-const HISTORY_KEY = "vivaverify-history";
+const HISTORY_KEY = "vivaverify-improvement";
 const SCREENS = ["setup", "analysed", "viva", "report", "progress", "how"];
 
 const $ = (id) => document.getElementById(id);
@@ -239,7 +239,7 @@ function showReport(r) {
       <div class="who student">You</div><p>${esc(e.answer) || '<span class="muted">(no answer)</span>'}</p>
       ${evalCard(e)}
     </div>`).join("");
-  saveHistory(r);
+  saveImprovement(r);
 }
 
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
@@ -247,105 +247,101 @@ document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("cli
   for (const id of ["rSummary", "rTranscript"]) $(id).hidden = id !== b.dataset.tab;
 }));
 
-// ---------- progress (stored only in this browser) ----------
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
-}
-
-function saveHistory(r) {
-  const history = loadHistory();
-  history.push({
-    date: new Date().toISOString(), title: session.doc.title, percent: r.percent, verdict: r.verdict,
-    strictness: session.settings.strictness, topics: r.questions.map((q) => ({ topic: q.topic, score: q.score })),
+// ---------- How to improve (actionable feedback on what was missed) ----------
+function saveImprovement(r) {
+  const items = r.questions.map((q) => {
+    const ev = (session?.evaluations || []).filter((e) => e.index === q.index).at(-1) || {};
+    return {
+      index: q.index,
+      topic: q.topic,
+      question: q.question,
+      score: q.score,
+      followup_used: q.followup_used,
+      answer: ev.answer || "",
+      covered: ev.covered || [],
+      missing: (q.missing && q.missing.length) ? q.missing : (ev.missing || []),
+      contradictions: ev.contradictions || [],
+      feedback: ev.feedback || "",
+      reread: q.reread || [],
+    };
   });
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-50))); } catch { /* storage unavailable */ }
+  const data = {
+    title: session?.doc?.title || "Project Report",
+    date: new Date().toISOString(),
+    percent: r.percent,
+    verdict: r.verdict,
+    items,
+  };
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(data)); } catch {}
 }
-
-$("clearBtn").addEventListener("click", () => {
-  try { localStorage.removeItem(HISTORY_KEY); } catch { /* storage unavailable */ }
-  renderProgress();
-});
 
 function renderProgress() {
-  const h = loadHistory();
-  $("progressEmpty").hidden = h.length > 0;
-  $("progressBody").hidden = $("historyCard").hidden = h.length === 0;
-  $("pTiles").innerHTML = "";
-  if (!h.length) return;
-  const scores = h.map((a) => a.percent);
-  const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-  const delta = h.length > 1 ? scores.at(-1) - scores.at(-2) : null;
-  $("pTiles").innerHTML = tiles([
-    ["Vivas taken", h.length], ["Best score", `${Math.max(...scores)}%`],
-    ["Latest score", `${scores.at(-1)}%`, delta === null ? "" : `${delta >= 0 ? "+" : ""}${delta} vs previous`],
-    ["Average", `${avg}%`],
-  ]);
-  renderChart(h);
-  renderTopics(h);
-  $("historyRows").innerHTML = h.slice().reverse().map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${esc(a.title)}</td>
-    <td>${a.topics.length}</td><td>${esc(cap(a.strictness))}</td><td class="num">${a.percent}%</td><td>${esc(a.verdict)}</td></tr>`).join("");
-}
-
-// Column chart: one series (score per attempt), bars <= 24px, 4px rounded top, hairline grid,
-// labels only on the best and latest bars, every bar has a hover/focus tooltip.
-function renderChart(h) {
-  const W = 560, H = 230, L = 40, R = 12, T = 24, B = 30;
-  const plotH = H - T - B, band = (W - L - R) / h.length, bw = Math.min(24, band * 0.6), base = T + plotH;
-  const best = Math.max(...h.map((a) => a.percent));
-  const grid = [0, 50, 100].map((v) => {
-    const y = base - (v / 100) * plotH;
-    return `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" class="gridline"/><text x="${L - 8}" y="${y + 4}" class="axis" text-anchor="end">${v}%</text>`;
-  }).join("");
-  const bars = h.map((a, i) => {
-    const x = L + i * band + (band - bw) / 2, hgt = Math.max(1, (a.percent / 100) * plotH), y = base - hgt, r = Math.min(4, hgt);
-    const path = `M${x},${base} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${base} Z`;
-    const label = i === h.length - 1 || a.percent === best
-      ? `<text x="${x + bw / 2}" y="${y - 6}" class="value" text-anchor="middle">${a.percent}%</text>` : "";
-    return `<g class="bar" tabindex="0" data-i="${i}"><rect x="${L + i * band}" y="${T}" width="${band}" height="${plotH}" class="hit"/>
-      <path d="${path}" class="mark"/>${label}
-      <text x="${x + bw / 2}" y="${base + 18}" class="axis" text-anchor="middle">#${i + 1}</text></g>`;
-  }).join("");
-  $("chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Score per attempt">${grid}${bars}</svg>`;
-  $("chart").querySelectorAll(".bar").forEach((g) => {
-    const a = h[+g.dataset.i];
-    const on = () => tooltip(g, `${a.percent}%`, `Attempt ${+g.dataset.i + 1} · ${fmtDate(a.date)} · ${a.title}`);
-    g.addEventListener("pointerenter", on);
-    g.addEventListener("focus", on);
-    g.addEventListener("pointerleave", () => { $("tooltip").hidden = true; });
-    g.addEventListener("blur", () => { $("tooltip").hidden = true; });
-  });
-}
-
-function tooltip(target, value, label) {
-  const tip = $("tooltip");
-  tip.replaceChildren();
-  const strong = document.createElement("strong");
-  strong.textContent = value;
-  const span = document.createElement("span");
-  span.textContent = label;
-  tip.append(strong, span);
-  tip.hidden = false;
-  const box = target.getBoundingClientRect();
-  tip.style.left = `${box.left + box.width / 2 + window.scrollX}px`;
-  tip.style.top = `${box.top + window.scrollY - 8}px`;
-}
-
-// Meters: average score per topic; the fill carries severity, and a text label always says it too.
-function renderTopics(h) {
-  const byTopic = {};
-  const names = {};
-  for (const a of h) for (const t of a.topics) {
-    const key = t.topic.trim().toLowerCase();   // "Liveness Check" and "Liveness check" are one topic
-    names[key] ??= cap(key);
-    (byTopic[key] ??= []).push(t.score);
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(HISTORY_KEY)); } catch {}
+  if (!data || !data.items || !data.items.length) {
+    $("progressEmpty").hidden = false;
+    $("improveSummary").hidden = true;
+    $("improveList").innerHTML = "";
+    return;
   }
-  const rows = Object.entries(byTopic).map(([key, s]) => [names[key], s.reduce((x, y) => x + y, 0) / s.length])
-    .sort((a, b) => a[1] - b[1]).slice(0, 6);
-  $("topicMeters").innerHTML = rows.map(([topic, avg]) => {
-    const level = avg >= 4 ? ["good", "strong"] : avg >= 3 ? ["mid", "revise"] : ["low", "needs work"];
-    return `<div class="meter-row"><div class="meter-label"><span>${esc(topic)}</span>
-      <span class="muted">${avg.toFixed(1)}/5 · ${level[1]}</span></div>
-      <div class="meter ${level[0]}"><div style="width:${(avg / 5) * 100}%"></div></div></div>`;
+  $("progressEmpty").hidden = true;
+  $("improveSummary").hidden = false;
+
+  const gaps = data.items.filter((it) => it.score < 4 || (it.missing && it.missing.length > 0));
+  $("improveSummary").innerHTML = tiles([
+    ["Report", data.title],
+    ["Latest score", `${data.percent}%`, data.verdict],
+    ["Areas to revise", gaps.length === 0 ? "All clear - strong!" : `${gaps.length} of ${data.items.length} questions need work`],
+  ]);
+
+  $("improveList").innerHTML = data.items.map((it) => {
+    const badgeClass = it.score >= 4 ? "good" : it.score >= 3 ? "mid" : "low";
+    const statusText = it.score >= 4 ? "Solid grasp" : it.score >= 3 ? "Partial - gaps to fix" : "Weak - revise thoroughly";
+
+    const missingHtml = it.missing && it.missing.length ? `
+      <div class="improve-block">
+        <div class="improve-title warn">Expected points you missed:</div>
+        <ul class="improve-list">
+          ${it.missing.map((m) => `<li>${esc(m)}</li>`).join("")}
+        </ul>
+      </div>` : "";
+
+    const contradictionsHtml = it.contradictions && it.contradictions.length ? `
+      <div class="improve-block">
+        <div class="improve-title error">Contradicted your report:</div>
+        <ul class="improve-list error">
+          ${it.contradictions.map((c) => `<li>${esc(c)}</li>`).join("")}
+        </ul>
+      </div>` : "";
+
+    const feedbackHtml = it.feedback ? `
+      <div class="improve-block">
+        <div class="improve-title">Examiner advice:</div>
+        <p class="improve-text">${esc(it.feedback)}</p>
+      </div>` : "";
+
+    const rereadHtml = it.reread && it.reread.length ? `
+      <div class="improve-block">
+        <div class="improve-title info">Exact sections to re-read in your report:</div>
+        ${it.reread.map((r) => `<blockquote><b>Section [${esc(r.id)}]</b> ${esc(r.excerpt)}</blockquote>`).join("")}
+      </div>` : "";
+
+    return `
+      <div class="card improve-card ${badgeClass}">
+        <div class="rrow-head">
+          <span class="score ${badgeClass}">${it.score}/5</span>
+          <div>
+            <b>Q${it.index}: ${esc(it.topic)}</b>
+            <span class="muted small-text"> &middot; ${statusText}</span>
+          </div>
+        </div>
+        <p class="improve-q">${esc(it.question)}</p>
+        ${it.answer ? `<div class="improve-answer"><span class="muted">Your answer: </span>${esc(it.answer)}</div>` : ""}
+        ${missingHtml}
+        ${contradictionsHtml}
+        ${feedbackHtml}
+        ${rereadHtml}
+      </div>`;
   }).join("");
 }
 

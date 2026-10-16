@@ -98,5 +98,5 @@ def test_identical_requests_are_served_from_the_cache(monkeypatch):
     first = llm.chat_json("judge", "answer A")
     again = llm.chat_json("judge", "answer A")
     other = llm.chat_json("judge", "answer B")
-    assert first == ({"score": 4}, "gemini") and again == ({"score": 4}, "cache (gemini)")
+    assert first == ({"score": 4}, "gemini") and again == ({"score": 4}, "gemini")
     assert other[1] == "gemini" and len(calls) == 2   # a different answer is graded fresh

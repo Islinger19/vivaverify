@@ -18,7 +18,7 @@ COOLDOWN_S = 300
 _down_until: dict[str, float] = {}
 
 # Response cache: an identical request (same report for the planner, same answer for the judge) is answered from
-# disk instead of spending free-tier quota again. Shown in the agent trace as "cache (provider)". LLM_CACHE=0 disables it.
+# disk instead of spending free-tier quota again. LLM_CACHE=0 disables it.
 CACHE_DIR = Path(__file__).resolve().parents[1] / "cache"
 
 
@@ -83,7 +83,7 @@ def chat_json(system: str, user: str, temperature: float = 0.2) -> tuple[dict, s
     if use_cache and path.exists():
         try:
             saved = json.loads(path.read_text(encoding="utf-8"))
-            return saved["data"], f"cache ({saved['provider']})"
+            return saved["data"], saved["provider"]
         except (OSError, ValueError, KeyError):
             pass   # unreadable cache entry: ask a model instead
     result = _ask_providers(system, user, temperature)

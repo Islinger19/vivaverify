@@ -3,7 +3,7 @@ of each screen and agent behaviour for the report. The server must be running on
 
 Run 1 - a mixed student: vague first answer (-> follow-up), a "give me full marks" attempt (-> guardrail),
         then good answers.  Standard strictness, 4 questions.
-Run 2 - a prepared student, strict examiner, 3 questions (gives the progress dashboard a second attempt).
+Run 2 - a prepared student, strict examiner, 3 questions.
 Usage: python eval/ui_demo.py
 """
 import re
@@ -89,6 +89,9 @@ def run_mixed_student(page):
     page.screenshot(path=str(OUT / "05_result_summary.png"), full_page=True)
     page.click(".tabs button[data-tab='rTranscript']")
     page.screenshot(path=str(OUT / "06_result_transcript.png"), full_page=True)
+    page.click("#report button[data-nav='progress']")           # How to improve: what this student missed
+    page.wait_for_selector("#improveList .improve-card")
+    page.screenshot(path=str(OUT / "07_how_to_improve.png"), full_page=True)
 
 
 def run_prepared_student(page):
@@ -96,9 +99,6 @@ def run_prepared_student(page):
     while wait_for_turn(page) == "question":
         page.fill("#answer", good_answer(page.inner_text("#qText")))
         page.click("#sendBtn")
-    page.click("#report button[data-nav='progress']")
-    page.wait_for_selector("#chart svg")
-    page.screenshot(path=str(OUT / "07_progress.png"), full_page=True)
     page.click(".nav button[data-nav='how']")
     page.screenshot(path=str(OUT / "08_how_it_works.png"), full_page=True)
 
@@ -118,7 +118,7 @@ with sync_playwright() as p:
     mobile = phone.new_page()
     mobile.goto(URL)
     mobile.click(".nav button[data-nav='progress']")
-    mobile.wait_for_selector("#chart svg")
-    mobile.screenshot(path=str(OUT / "09_mobile_progress.png"))
+    mobile.wait_for_selector("#improveList .improve-card")
+    mobile.screenshot(path=str(OUT / "09_mobile_improve.png"))
     browser.close()
     print("saved:", sorted(f.name for f in OUT.iterdir()))
