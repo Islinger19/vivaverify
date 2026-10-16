@@ -31,7 +31,7 @@ def test_extract_json_tolerates_fences_and_reasoning(raw):
     assert llm.extract_json(raw) == {"score": 4}
 
 
-def test_fallback_skips_a_failing_provider_and_cools_it_down(monkeypatch):
+def test_fallback_skips_failing_providers_and_cools_them_down(monkeypatch):
     calls = []
 
     class FakeOpenAI:
@@ -41,17 +41,18 @@ def test_fallback_skips_a_failing_provider_and_cools_it_down(monkeypatch):
             self.completions = self
 
         def create(self, model, **kw):
-            calls.append(model)
-            if "googleapis" in self.base_url:
-                raise RuntimeError("503 high demand")
+            calls.append(self.base_url)
+            if "openrouter" not in self.base_url:   # Groq and Gemini are "down"
+                raise RuntimeError("429 rate limit / 503 high demand")
             msg = type("M", (), {"content": '{"ok": true}'})
             return type("R", (), {"choices": [type("C", (), {"message": msg})]})
 
     monkeypatch.setattr(llm, "OpenAI", FakeOpenAI)
     monkeypatch.setattr(llm, "_down_until", {})
-    monkeypatch.setenv("GEMINI_API_KEY", "x")
-    monkeypatch.setenv("OPENROUTER_API_KEY", "y")
+    for var in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"):
+        monkeypatch.setenv(var, "x")
 
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
+    tried = len(calls)                       # groq, groq-backup, gemini, then openrouter
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
-    assert sum("gemini" in m for m in calls) == 1   # second call skipped Gemini (cooldown)
+    assert len(calls) == tried + 1           # the failing providers were skipped while cooling down

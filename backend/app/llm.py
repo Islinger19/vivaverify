@@ -1,4 +1,4 @@
-"""Direct LLM calls to Gemini and OpenRouter through their OpenAI-compatible endpoints.
+"""Direct LLM calls to Groq, Gemini and OpenRouter through their OpenAI-compatible endpoints.
 
 Providers are tried in order. A provider that errors (rate limit, 503 "high demand",
 timeout) is skipped for COOLDOWN_S seconds, so a congested free tier does not slow
@@ -22,7 +22,13 @@ class LLMError(RuntimeError):
 
 def providers() -> list[dict]:
     openrouter = "https://openrouter.ai/api/v1"
+    groq = "https://api.groq.com/openai/v1"
     return [
+        # Groq first: fastest, and 1,000 free requests/day per model (8k tokens/min, so very long reports fall through)
+        {"name": "groq", "base_url": groq, "key": os.getenv("GROQ_API_KEY"),
+         "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"), "timeout": 30},
+        {"name": "groq-backup", "base_url": groq, "key": os.getenv("GROQ_API_KEY"),
+         "model": os.getenv("GROQ_BACKUP_MODEL", "qwen/qwen3.8-27b"), "timeout": 30},
         {"name": "gemini", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
          "key": os.getenv("GEMINI_API_KEY"), "model": os.getenv("GEMINI_MODEL", "gemini-flash-latest"), "timeout": 25},
         {"name": "openrouter", "base_url": openrouter, "key": os.getenv("OPENROUTER_API_KEY"),
