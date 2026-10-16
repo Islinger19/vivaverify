@@ -70,7 +70,55 @@ def test_compound_or_long_followup_is_replaced_by_a_single_question(graph, doc_i
     fake_llm([1, 1, 5, 5, 5], followup=long_q)
     questions = of_type(drive(graph, doc_id, [STRONG] * 5), "question")
     assert questions[1]["followup"]
-    assert questions[1]["question"] == "Can you explain this part of your work: something?"
+    assert questions[1]["question"] == "Let's go deeper on Problem. Can you explain that part of your work in more detail?"
+
+
+def test_followup_that_gives_away_a_number_is_replaced(graph, doc_id, fake_llm):
+    fake_llm([1, 1, 5, 5, 5], followup="Why must the eye aspect ratio drop below 0.21?")
+    question = of_type(drive(graph, doc_id, [STRONG] * 5), "question")[1]["question"]
+    assert "0.21" not in question and question.startswith("Let's go deeper on Problem.")
+
+
+def test_live_evaluation_never_reveals_the_missing_points(graph, doc_id, fake_llm):
+    fake_llm([1, 4, 5, 5, 5])
+    events = drive(graph, doc_id, [STRONG] * 5)
+    for e in of_type(events, "evaluation"):   # sent while the viva runs: readable in the browser's dev tools
+        assert not {"missing", "feedback", "contradictions", "covered", "next_followup"} & set(e), e
+        assert "blink" not in e["note"].lower()
+    assert "follow-up" in of_type(events, "evaluation")[0]["note"]
+    transcript = of_type(events, "report")[0]["transcript"]   # the full feedback arrives once the viva is over
+    assert len(transcript) == 5 and transcript[0]["missing"] == ["blink detection"]
+    assert transcript[0]["feedback"] == "You missed blink detection."
+
+
+def test_followup_is_graded_together_with_the_first_answer(graph, doc_id, fake_llm):
+    fake = fake_llm([2, 5, 5, 5, 5])
+    events = drive(graph, doc_id, ["Roll call was slow.", "Because friends marked proxy attendance.", STRONG, STRONG, STRONG])
+    followup_prompt = [u for s, u in fake.prompts if s == agent.JUDGE_SYSTEM][1]
+    assert "Student answer: Roll call was slow." in followup_prompt
+    assert "Student follow-up answer: Because friends marked proxy attendance." in followup_prompt
+    live = of_type(events, "evaluation")[1]
+    assert live["followup"] and live["question_score"] == agent.FOLLOWUP_CAP   # the live dot matches the final score
+    assert of_type(events, "report")[0]["questions"][0]["score"] == agent.FOLLOWUP_CAP
+
+
+def test_short_correct_answers_reach_the_judge(graph, doc_id, fake_llm):
+    fake = fake_llm([5, 5, 5, 5])
+    events = drive(graph, doc_id, ["Proxy attendance.", "Five photos.", "Blink detection", "81 percent"])
+    assert fake.judge_calls == 4 and not any(e["flag"] for e in of_type(events, "evaluation"))
+
+
+def test_practising_again_asks_for_new_questions(graph, doc_id, fake_llm):
+    fake = fake_llm([5] * 8)
+    drive(graph, doc_id, [STRONG] * 4, session="first")
+    drive(graph, doc_id, [STRONG] * 4, session="second")
+    first, second = [u for s, u in fake.prompts if s != agent.JUDGE_SYSTEM]
+    assert "already practised" not in first
+    assert "already practised" in second and "How does your system stop photo spoofing?" in second
+
+
+def test_judge_scores_in_other_formats_are_understood():
+    assert [agent.parse_score(v) for v in (4, "4", 3.6, "3/5", "score: 2", None, "", 9)] == [4, 4, 4, 3, 2, 0, 0, 5]
 
 
 def test_settings_change_question_count_and_pass_mark(graph, doc_id, fake_llm):
@@ -95,5 +143,9 @@ def test_manipulation_rule_ignores_ordinary_phrasing():
         assert agent.MANIPULATION.search(attempt), attempt
     for honest in ["The LLM acts as a judge and the planner acts as the examiner.",
                    "A regex catches answers that try to instruct the examiner, such as asking it to drop its rules.",
-                   "We disregarded the CNN detector because it was too slow on the Pi."]:
+                   "We disregarded the CNN detector because it was too slow on the Pi.",
+                   "Once the face matches, you are now marked present in the database.",
+                   "Our system prompt tells the judge to use only the report.",
+                   "The guardrail blocks phrases like full marks before the LLM runs.",
+                   "Without the liveness check a friend could pretend to be the student with a printed photo."]:
         assert not agent.MANIPULATION.search(honest), honest

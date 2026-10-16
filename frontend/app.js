@@ -19,9 +19,11 @@ let keys = null;        // Soniox temporary keys {stt, tts}
 let mic = null;         // active recording {stream, rec, sock, done}
 let audioCtx = null;
 let playing = [];       // TTS audio sources currently scheduled
+let tts = null;         // the TTS WebSocket currently streaming audio
 let session = null;     // everything about the running viva
 let currentQuestion = "";
 let finished = false;
+let failed = null;      // the last error event, while the viva waits for "Try again"
 
 // ---------- navigation ----------
 function show(id) {
@@ -113,6 +115,7 @@ function showPlan(ev, ms) {
 }
 
 $("beginBtn").addEventListener("click", () => {
+  if (failed) return retry();
   session.started = true;
   show("viva");
   if (session.firstQuestion) showQuestion(session.firstQuestion);
@@ -125,7 +128,7 @@ function openViva(docId) {
     type: "start", doc_id: docId, num_questions: session.settings.questions, strictness: session.settings.strictness,
   }));
   viva.onmessage = (m) => handle(JSON.parse(m.data));
-  viva.onclose = () => { if (!finished) status("Connection closed. Reload to start again."); };
+  viva.onclose = () => { if (!finished && !failed) showError({ message: "The connection to the examiner was lost.", retry: false }); };
 }
 
 let lastPlannerMs = 0;
@@ -142,16 +145,37 @@ function handle(ev) {
     } else showQuestion(ev);
   } else if (ev.type === "evaluation") showEvaluation(ev);
   else if (ev.type === "report") showReport(ev);
-  else if (ev.type === "error") {
-    finished = true;
-    status(ev.message);
+  else if (ev.type === "error") showError(ev);
+}
+
+// An LLM failure does not end the viva: the backend keeps its state and re-runs the failed step on "retry".
+function showError(ev) {
+  failed = ev;
+  stopSpeaking();
+  status(ev.message);
+  const label = ev.retry ? "Try again" : "Start over";
+  if (!session.started) {
     $("planList").innerHTML = `<li class="error">${esc(ev.message)}</li>`;
-    const retry = $("beginBtn").cloneNode(true);   // a fresh button without the "Begin viva" handler
-    retry.disabled = false;
-    retry.textContent = "Try again";
-    retry.onclick = () => location.reload();
-    $("beginBtn").replaceWith(retry);
+    $("beginBtn").disabled = false;
+    $("beginBtn").textContent = label;
+  } else {
+    $("retryBtn").textContent = label;
+    $("retryBtn").hidden = false;
   }
+}
+
+function retry() {
+  const ev = failed;
+  failed = null;
+  if (!ev.retry || viva.readyState !== WebSocket.OPEN) return location.reload();
+  $("retryBtn").hidden = true;
+  if (!session.started) {
+    $("beginBtn").disabled = true;
+    $("beginBtn").textContent = "Preparing...";
+    $("planList").innerHTML = '<li class="muted">Examiner is reading your report...</li>';
+  }
+  status("Trying again...");
+  viva.send(JSON.stringify({ type: "retry" }));
 }
 
 function showQuestion(q) {
@@ -171,8 +195,8 @@ function showQuestion(q) {
 }
 
 function renderDots() {
-  const best = {};
-  for (const e of session.evaluations) best[e.index] = Math.max(best[e.index] ?? 0, e.score);
+  const best = {};   // the question's score so far, computed by the backend exactly as in the final report
+  for (const e of session.evaluations) best[e.index] = e.question_score;
   $("qDots").innerHTML = session.plan.map((t, i) => {
     const n = i + 1;
     const state = n in best ? (best[n] >= 4 ? "good" : best[n] >= 3 ? "mid" : "low") : n === session.current ? "now" : "";
@@ -194,20 +218,29 @@ function setAnswering(on) {
   $("micBtn").disabled = !on || !keys;
 }
 
-function evalCard(e, showMissing = true) {
+// Full feedback, for the transcript after the viva.
+function evalCard(e) {
   const list = (title, items) => items && items.length ? `<div><b>${title}:</b> ${items.map(esc).join("; ")}</div>` : "";
   return `<div class="eval s${e.score}">
     <div class="eval-head"><span class="score">${e.score}/5</span>
       <span>Q${e.index}${e.followup ? " follow-up" : ""} - ${esc(e.topic)}</span>
       ${e.flag ? `<span class="chip warn">${esc(e.flag)}</span>` : ""}</div>
     <p>${esc(e.feedback)}</p>
-    ${list("Covered", e.covered)}${showMissing ? list("Missing", e.missing) : ""}${list("Conflicts with your report", e.contradictions)}
+    ${list("Covered", e.covered)}${list("Missing", e.missing)}${list("Conflicts with your report", e.contradictions)}
   </div>`;
 }
 
+// During the viva the backend sends only the score and a neutral note, never the missing points,
+// so nothing on screen (or in the browser's dev tools) gives away the answer to the follow-up.
 function showEvaluation(e) {
   session.evaluations.push(e);
-  $("evals").insertAdjacentHTML("afterbegin", evalCard(e, false));   // hide solution/missing on the question screen
+  $("evals").insertAdjacentHTML("afterbegin", `<div class="eval s${e.question_score}">
+    <div class="eval-head"><span class="score">${e.question_score}/5</span>
+      <span>Q${e.index}${e.followup ? " after follow-up" : ""} - ${esc(e.topic)}</span>
+      ${e.flag ? `<span class="chip warn">${esc(e.flag)}</span>` : ""}</div>
+    <p>${esc(e.note)}</p>
+    ${e.flag ? "" : `<div class="muted small-text">Covered ${e.covered_count} of ${e.points} key points</div>`}
+  </div>`);
   renderDots();
 }
 
@@ -223,7 +256,7 @@ function showReport(r) {
   const minutes = Math.max(1, Math.round((Date.now() - session.startedAt) / 60000));
   $("rTiles").innerHTML = tiles([
     ["Questions", r.questions.length], ["Follow-ups needed", r.questions.filter((q) => q.followup_used).length],
-    ["Answers flagged", session.evaluations.filter((e) => e.flag).length], ["Time taken", `${minutes} min`],
+    ["Answers flagged", r.transcript.filter((e) => e.flag).length], ["Time taken", `${minutes} min`],
   ]);
   $("rSummary").innerHTML = r.questions.map((q) => `
     <div class="rrow">
@@ -233,11 +266,11 @@ function showReport(r) {
       ${q.missing.length ? `<div><b>Missing:</b> ${q.missing.map(esc).join("; ")}</div>` : ""}
       ${q.reread.map((c) => `<blockquote><b>Re-read [${c.id}]</b> ${esc(c.excerpt)}</blockquote>`).join("")}
     </div>`).join("");
-  $("rTranscript").innerHTML = session.evaluations.map((e) => `
+  $("rTranscript").innerHTML = r.transcript.map((e) => `
     <div class="turn">
       <div class="who examiner">Examiner${e.followup ? " (follow-up)" : ""}</div><p>${esc(e.question)}</p>
       <div class="who student">You</div><p>${esc(e.answer) || '<span class="muted">(no answer)</span>'}</p>
-      ${evalCard(e, true)}
+      ${evalCard(e)}
     </div>`).join("");
   saveImprovement(r);
 }
@@ -250,7 +283,7 @@ document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("cli
 // ---------- How to improve (actionable feedback on what was missed) ----------
 function saveImprovement(r) {
   const items = r.questions.map((q) => {
-    const ev = (session?.evaluations || []).filter((e) => e.index === q.index).at(-1) || {};
+    const ev = r.transcript.filter((e) => e.index === q.index).at(-1) || {};
     return {
       index: q.index,
       topic: q.topic,
@@ -347,6 +380,7 @@ function renderProgress() {
 
 // ---------- Soniox real-time speech-to-text ----------
 async function startMic() {
+  stopSpeaking();   // otherwise the mic can pick up the examiner's voice and add the question to the answer
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const sock = new WebSocket(SONIOX_STT, ["soniox-api-key", keys.stt]);
   const rec = new MediaRecorder(stream);
@@ -398,6 +432,7 @@ async function stopMic() {
 
 $("micBtn").addEventListener("click", () => (mic ? stopMic() : startMic().catch((e) => status(`Microphone: ${e.message}`))));
 $("sendBtn").addEventListener("click", submitAnswer);
+$("retryBtn").addEventListener("click", retry);
 $("replayBtn").addEventListener("click", () => speak(currentQuestion));
 
 // ---------- Soniox real-time text-to-speech ----------
@@ -406,6 +441,7 @@ function speak(text) {
   stopSpeaking();
   const streamId = `q${Date.now()}`;
   const sock = new WebSocket(SONIOX_TTS, ["soniox-api-key", keys.tts]);
+  tts = sock;
   let at = audioCtx.currentTime + 0.05;
   let carry = new Uint8Array(0);   // an odd byte left over between chunks
 
@@ -416,6 +452,7 @@ function speak(text) {
     sock.send(JSON.stringify({ stream_id: streamId, text: "", text_end: true }));
   };
   sock.onmessage = (m) => {
+    if (sock !== tts) return;   // stopped or replaced: drop audio that is still arriving
     const msg = JSON.parse(m.data);
     if (msg.audio) {
       const raw = Uint8Array.from(atob(msg.audio), (c) => c.charCodeAt(0));
@@ -441,6 +478,10 @@ function speak(text) {
 }
 
 function stopSpeaking() {
+  if (tts) {
+    try { tts.close(); } catch { /* already closed */ }
+    tts = null;
+  }
   playing.forEach((s) => { try { s.stop(); } catch { /* already ended */ } });
   playing = [];
 }
@@ -459,7 +500,6 @@ function addStep(node, detail, ms) {
 }
 
 const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
-const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 function status(text) { $("status").textContent = text; }
 

@@ -96,6 +96,7 @@
           <div class="row">
             <button id="micBtn" class="mic" disabled>Start speaking</button>
             <button id="sendBtn" class="primary" disabled>Submit answer</button>
+            <button id="retryBtn" class="primary" hidden>Try again</button>
             <span id="status" class="muted"></span>
           </div>
         </div>
@@ -151,14 +152,17 @@
           the implementation and the results, each linked to the chunks that hold the answer.</li>
         <li><b>Ask.</b> The examiner speaks each question and pauses until you answer, by voice or keyboard.</li>
         <li><b>Judge and follow up.</b> Rule-based guardrails run first; then a judge LLM compares your answer with
-          your own report. A weak answer gets one follow-up on the most important missing point.</li>
+          your own report. A weak answer gets one follow-up on the most important missing point, and the follow-up
+          is graded together with your first answer. During the viva you only see your score, so the feedback
+          cannot give away the follow-up's answer; the full feedback comes with your result.</li>
         <li><b>Report.</b> Your score is calculated by code, not by the LLM, and every weak answer points to the
           section you should re-read.</li>
       </ol>
       <img src="assets/agent_workflow.png" alt="Agent workflow: planner, examiner, judge, router, follow-up, reporter" class="diagram">
       <h3>What happens to your data</h3>
       <ul>
-        <li>Your report is kept in server memory for the session only and is never written to disk.</li>
+        <li>Your uploaded file is kept in server memory only and is never saved. The questions and grades generated
+          from it may be kept on the server, so an identical request does not use AI quota again.</li>
         <li>Voice goes straight from your browser to the speech service using a short-lived key.</li>
       </ul>
     </section>

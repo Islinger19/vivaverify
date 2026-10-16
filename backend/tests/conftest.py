@@ -26,14 +26,16 @@ class FakeLLM:
         self.scores = list(scores)
         self.followup = followup
         self.judge_calls = 0
+        self.prompts = []          # (system, user) of every call, to check what the models were shown
 
     def __call__(self, system, user, temperature=0.2):
+        self.prompts.append((system, user))
         if system.startswith("You are a strict university viva examiner"):
             return PLAN, "fake"
         self.judge_calls += 1
         score = self.scores.pop(0)
-        return ({"score": score, "covered": [], "missing": ["something"] if score < 5 else [],
-                 "contradictions": [], "feedback": "ok", "followup": self.followup}, "fake")
+        return ({"score": score, "covered": [], "missing": ["blink detection"] if score < 5 else [],
+                 "contradictions": [], "feedback": "You missed blink detection.", "followup": self.followup}, "fake")
 
 
 @pytest.fixture
@@ -59,3 +61,9 @@ def graph():
 def isolated_llm_cache(tmp_path, monkeypatch):
     """Every test gets an empty response cache, so results never leak between tests."""
     monkeypatch.setattr(llm, "CACHE_DIR", tmp_path / "cache")
+
+
+@pytest.fixture(autouse=True)
+def fresh_practice_history(monkeypatch):
+    """Every test plans as if the report had never been practised before."""
+    monkeypatch.setattr(agent, "PRACTISED", {})

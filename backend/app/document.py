@@ -3,6 +3,7 @@
 The chunk ids are what the planner cites as evidence and what the final gap report
 points the student back to.
 """
+import hashlib
 import io
 import re
 import uuid
@@ -63,7 +64,7 @@ def add_document(title: str, text: str) -> dict:
     while len(DOCS) >= MAX_DOCS:
         DOCS.pop(next(iter(DOCS)))
     doc_id = uuid.uuid4().hex[:12]
-    DOCS[doc_id] = {"title": title, "chunks": chunks,
+    DOCS[doc_id] = {"title": title, "chunks": chunks, "key": hashlib.sha256(text.encode("utf-8")).hexdigest(),
                     "bm25": BM25Okapi([tokenize(c["text"]) for c in chunks])}
     outline = [{"id": c["id"], "preview": " ".join(plain(c["text"]).split()[:16]) + " ..."} for c in chunks]
     return {"doc_id": doc_id, "title": title, "chunks": len(chunks), "words": len(text.split()), "outline": outline}

@@ -15,12 +15,14 @@ planner -> examiner -> judge -> follow_up     -> examiner   (score < 3, max one 
 
 | Part | What it does |
 |---|---|
-| Planner (LLM) | Reads the chunked report, plans 4 questions with expected points and evidence chunk ids |
+| Planner (LLM) | Reads the chunked report, plans 4 questions with expected points and evidence chunk ids. Practising the same report again asks new questions |
 | Examiner | Pauses the graph with LangGraph `interrupt()` until the student answers (human in the loop) |
-| Guardrails | Regex checks for "give me full marks"-style manipulation and empty answers, run before the LLM |
+| Guardrails | Regex checks for "give me full marks"-style manipulation and empty answers, run before the LLM. A short real answer ("Blink detection") still goes to the judge |
 | Retriever | BM25 over the report chunks, to ground the judge in the right sections |
-| Judge (LLM) | Scores 0-5 against the expected points; any contradiction with the report caps the score at 2 |
+| Judge (LLM) | Scores 0-5 against the expected points; any contradiction with the report caps the score at 2. A follow-up answer is graded together with the first answer |
+| Live feedback | While the viva runs the browser only gets the score and a neutral note, never the missing points, so the answer to the follow-up cannot be read off the screen or from the WebSocket. The full feedback is sent with the final report |
 | Router | Conditional edge: follow-up, next question, or final report |
+| Recovery | If every LLM fails mid-viva, the student presses Try again and the failed step re-runs from the last checkpoint; no answers are lost |
 | Reporter | Deterministic scoring (follow-up recovery capped at 4/5), verdict and "re-read" excerpts |
 | LLM access | Direct calls to Gemini, then OpenRouter, then Ollama Cloud (Gemma 4 31B), all OpenAI-compatible APIs; failing providers cool down for 5 min |
 | Response cache | An identical request (same report, same answer) is answered from `backend/cache/` instead of spending free-tier quota. `LLM_CACHE=0` turns it off |
@@ -46,7 +48,7 @@ Open http://localhost:8000 (FastAPI also serves `frontend/` locally).
 ## Tests and evaluation
 
 ```bash
-.venv/Scripts/python -m pytest -q            # 23 offline tests, fake LLM, no API calls
+.venv/Scripts/python -m pytest -q            # 33 offline tests, fake LLM, no API calls
 .venv/Scripts/python eval/run_eval.py        # live judge accuracy + simulated students (~25 LLM calls)
 .venv/Scripts/python eval/voice_roundtrip.py # one Soniox TTS -> STT -> judge round trip
 python eval/ui_demo.py                       # two real vivas in Edge, screenshots of every screen (server must run)
@@ -88,9 +90,9 @@ in the backend `.env` to the Vercel URL afterwards (it is `*` by default).
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/health` | Status and configured providers |
-| `POST /api/documents` | Upload `file` (PDF/MD/TXT, max 5 MB) or `text`; returns `doc_id` |
+| `POST /api/documents` | Upload `file` (PDF/MD/TXT, max 5 MB) or `text`; returns `doc_id`. Rate-limited to 30 per IP per 10 min |
 | `POST /api/voice-token` | Two short-lived Soniox keys (`stt`, `tts`), rate-limited to 10 per IP per 10 min |
-| `WS /ws/viva` | Send `{"type":"start","doc_id":...}`, then `{"type":"answer","text":...}` per question. Receives `step`, `question`, `evaluation`, `report`, `error` events |
+| `WS /ws/viva` | Send `{"type":"start","doc_id":...}`, then `{"type":"answer","text":...}` per question; after an `error` with `"retry": true`, send `{"type":"retry"}`. Receives `step`, `question`, `evaluation` (score and note only), `report` (with the full `transcript`) and `error` events. 20 vivas per IP per 10 min; when `ALLOWED_ORIGINS` is set, other websites are refused |
 
 ## Known limitations
 
