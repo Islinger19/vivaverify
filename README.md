@@ -56,19 +56,29 @@ Results are saved in `backend/eval/` (`results.md`, `results.json`, `voice_round
 
 ## Deploy
 
-**Backend (VM, HTTPS via Dynu DNS + certbot):** copy the `vivaverify/` folder to the VM, put the real
-`backend/.env` in place (set `ALLOWED_ORIGINS` to the Vercel URL), then:
+**Live backend:** https://islinger19.ddnsfree.com (it also serves the frontend at the same address).
+
+**Backend - Oracle Cloud VM (Ubuntu 24.04):**
+- DNS: the Dynu hostname is kept pointing at the VM by `ddclient` (`/etc/ddclient.conf`, root-only).
+- nginx site `/etc/nginx/sites-available/vivaverify` (same as `backend/deploy/nginx.conf`): WebSocket upgrade
+  headers and a 900 s read timeout for `/ws/viva`. HTTPS by certbot, renewed automatically by `certbot.timer`.
+- App in `~/vivaverify/backend` with a `venv`. `.env` is copied to the VM separately and is never committed.
+- Runs in the tmux session `fastapi`:
 
 ```bash
-sudo DOMAIN=yourname.dynu.net EMAIL=you@example.com bash backend/deploy/setup_vm.sh
+tmux new -s fastapi
+cd ~/vivaverify/backend && source venv/bin/activate
+script -q -f -c "uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1" ~/fastapi.log
+# Ctrl+B then D to detach; tmux attach -t fastapi to come back
 ```
 
-This installs nginx + certbot, runs uvicorn under systemd (`vivaverify.service`, one worker), proxies the
-`/ws/viva` WebSocket, and gets a Let's Encrypt certificate.
+To update: `cd ~/vivaverify && git pull`, then restart uvicorn inside the tmux session (`pip install -r
+requirements.txt` first if dependencies changed). Keep one worker: documents and sessions live in memory.
+`backend/deploy/setup_vm.sh` is an alternative one-shot setup that uses systemd instead of tmux.
 
-**Frontend (Vercel):** set the backend domain in `frontend/config.js`, then deploy the `frontend/` folder
-(Root Directory = `vivaverify/frontend`, no build command). `vercel.json` adds the microphone permission
-and security headers.
+**Frontend - Vercel:** import this repository, set **Root Directory** to `frontend`, Framework Preset **Other**, no build
+command, **no environment variables**. The backend URL is in `frontend/config.js`. Optionally set `ALLOWED_ORIGINS`
+in the backend `.env` to the Vercel URL afterwards (it is `*` by default).
 
 ## API
 
