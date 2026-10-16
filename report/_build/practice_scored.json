@@ -1,0 +1,90 @@
+[
+ {
+  "topic": "Problem",
+  "question": "Why do standard chatbots fail for viva examinations compared to your dedicated agent?",
+  "answer": "A general chatbot drifts away from the student's own document, so its questions aren't grounded in what I actually wrote, and it doesn't score consistently or follow up when an answer is weak. VivaVerify plans questions only from the uploaded report, grades each answer against that report, and asks one follow-up on the missing point. The AI oral-exam tools that exist are research pilots, and none support Hinglish.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Design choice",
+  "question": "Why did you use BM25 instead of a vector database for retrieval in VivaVerify?",
+  "answer": "Because a student report is short, so keyword search is enough to find the right section. BM25 needs no embedding model, no extra API key and no vector database, so it is free and fast, and it is explainable because I can see which words matched. For answers that use different words, the judge also always gets the planner's evidence chunks.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Implementation",
+  "question": "How does the LangGraph workflow pause and wait for the student's spoken answer?",
+  "answer": "The examiner node calls LangGraph's interrupt(). That saves the state in the checkpointer and pauses the graph, and the question goes to the browser over the WebSocket. When the answer comes back, the backend resumes the same thread with Command(resume=answer), so the graph continues from exactly that point without re-running the planner. Each viva has its own thread id.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Testing",
+  "question": "What unexpected issue occurred during your follow-up prompt testing, and how did you fix it?",
+  "answer": "In the bluffer simulation one follow-up asked three questions at once and gave away the answer, the 0.21 threshold and the three seconds. A prompt is only a request, so I made the judge prompt stricter and added a code rule: a follow-up over 25 words or with more than one question mark is replaced by a single-point question. I added a unit test, and the bluffer's score fell from 20 to 0 percent because the hints were gone.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Framework choice",
+  "question": "Why did you choose LangGraph instead of CrewAI or the OpenAI Agents SDK?",
+  "answer": "A viva is a loop that has to stop and wait for a human between steps. LangGraph's interrupt and checkpointer give exactly that, and conditional edges let me keep the routing rules in my own code. CrewAI suits a team of agents finishing tasks, and the Agents SDK suits tool-calling with handoffs, not a turn-by-turn conversation.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Deterministic score",
+  "question": "Why is the final score calculated by code instead of by the LLM?",
+  "answer": "Because LLM output varies: in testing the judge gave 3 and then 2 to the same partial answer. So the LLM only judges each answer, and the reporter combines the scores in code, caps an answer that needed a follow-up at 4 out of 5, and picks the verdict from fixed bands. The mark is reproducible and cannot be hallucinated.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Guardrails",
+  "question": "How do the guardrails stop a student from manipulating the examiner?",
+  "answer": "They run in code before the LLM. One regular expression catches answers that try to instruct the examiner instead of answering, such as asking it to drop its rules or hand over top marks, and another catches empty or don't-know answers. Both score zero without any LLM call, so the student cannot talk the examiner round. In my demo run such an attempt was flagged and scored 0.",
+  "score": 5,
+  "missing": [],
+  "provider": "ollama"
+ },
+ {
+  "topic": "LLM fallback",
+  "question": "Why does VivaVerify fall back across several LLM providers?",
+  "answer": "Because free tiers are unreliable: Gemini's main model often returned 503 high-demand errors and OpenRouter's free tier stopped after 50 requests. So llm.py tries Gemini, then OpenRouter, then Ollama's Gemma 4, through the same OpenAI-compatible call, and a provider that fails is skipped for five minutes so it doesn't slow down every answer.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Voice",
+  "question": "How does the voice part work, and why did you use WebSockets?",
+  "answer": "The browser streams the microphone to Soniox's real-time speech-to-text over a WebSocket and shows the words as they arrive, and questions are spoken with Soniox's real-time text-to-speech the same way. WebSockets keep the delay low, so a viva feels natural. The backend only gives the browser short-lived keys, so the real API key stays on the server.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "topic": "Results",
+  "question": "What do your evaluation results show about the judge?",
+  "answer": "They show it separates good and bad answers: all six fixed answers fell in the expected band, including a Hinglish one, and a prepared student scored 95 percent against 0 for a bluffer. The weakness is borderline answers: the same partial answer scored 3, 2 and 2, which matters because 3 is the pass mark. The follow-up gives those students a second chance.",
+  "score": 5,
+  "missing": [],
+  "provider": "gemini-backup"
+ },
+ {
+  "weak_demo": {
+   "question": "Why did you use BM25 instead of a vector database for retrieval in VivaVerify?",
+   "answer": "Because BM25 is a good algorithm and it works well for this project.",
+   "score": 1,
+   "followup": "What specific characteristics of the reports made BM25 a suitable choice?"
+  }
+ }
+]

@@ -1,0 +1,199 @@
+{
+ "bank": [
+  {
+   "topic": "Problem and Motivation",
+   "question": "Why do standard chatbots fail for viva examinations compared to your dedicated agent?",
+   "expected_points": [
+    "Chatbots drift away from the student's document",
+    "Chatbots do not score consistently",
+    "Existing AI oral-exam tools are research pilots that do not support Hinglish"
+   ],
+   "evidence": [
+    "C6"
+   ],
+   "run": 1,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Design Choice",
+   "question": "Why did you use BM25 instead of a vector database for retrieval in VivaVerify?",
+   "expected_points": [
+    "Reports are short",
+    "It requires no vector database and no extra key",
+    "It is fast, free, and explainable"
+   ],
+   "evidence": [
+    "C10",
+    "C15"
+   ],
+   "run": 1,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Implementation Detail",
+   "question": "How does the LangGraph workflow pause and wait for the student's spoken answer?",
+   "expected_points": [
+    "Uses LangGraph's interrupt() function",
+    "Pauses the graph until the answer arrives over the WebSocket",
+    "Resumes from the exact same point using a checkpointer"
+   ],
+   "evidence": [
+    "C8",
+    "C9",
+    "C15"
+   ],
+   "run": 1,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Testing and Limitations",
+   "question": "What unexpected issue occurred during your follow-up prompt testing, and how did you fix it?",
+   "expected_points": [
+    "The model asked multiple questions at once and revealed the answer in the hint",
+    "Added a stricter prompt",
+    "Enforced a code rule to replace long or multi-question follow-ups"
+   ],
+   "evidence": [
+    "C14"
+   ],
+   "run": 1,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Problem and Context",
+   "question": "Why are existing general chatbots inadequate for conducting student project vivas?",
+   "expected_points": [
+    "chatbots drift away from the student's document",
+    "they do not score consistently",
+    "they lack support for Hinglish"
+   ],
+   "evidence": [
+    "C6"
+   ],
+   "run": 2,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Design Choice",
+   "question": "Why did you choose BM25 instead of a vector database for evidence retrieval in VivaVerify?",
+   "expected_points": [
+    "reports are short",
+    "requires no extra key or vector database",
+    "it is free, fast, and explainable"
+   ],
+   "evidence": [
+    "C9",
+    "C15"
+   ],
+   "run": 2,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Implementation Details",
+   "question": "How does the LangGraph setup handle pausing the viva workflow for a human student's answer?",
+   "expected_points": [
+    "uses LangGraph's interrupt() function",
+    "pauses the graph until the answer arrives over WebSocket",
+    "resumes from the same point using a checkpointer"
+   ],
+   "evidence": [
+    "C8",
+    "C15"
+   ],
+   "run": 2,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Testing and Limitations",
+   "question": "What unexpected behavior did you encounter with LLM follow-ups during testing, and how did you fix it?",
+   "expected_points": [
+    "follow-up asked multiple questions at once and revealed the answer",
+    "added a stricter prompt",
+    "enforced a code rule replacing long or multi-question follow-ups"
+   ],
+   "evidence": [
+    "C14",
+    "C16"
+   ],
+   "run": 2,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Problem and Motivation",
+   "question": "Why did you choose to build VivaVerify instead of using a standard chatbot for checking project reports?",
+   "expected_points": [
+    "Chatbots drift away from the student's document",
+    "Chatbots do not score consistently",
+    "Need to check if a student understands an AI-written report"
+   ],
+   "evidence": [
+    "C6"
+   ],
+   "run": 3,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Design Choice",
+   "question": "Why did you use BM25 instead of a vector database for retrieving evidence from the uploaded report?",
+   "expected_points": [
+    "Reports are small",
+    "Free, fast, and explainable",
+    "No vector database or extra key needed"
+   ],
+   "evidence": [
+    "C9",
+    "C15"
+   ],
+   "run": 3,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Implementation Detail",
+   "question": "How does LangGraph's interrupt mechanism facilitate the viva examination process?",
+   "expected_points": [
+    "Pauses the graph until the answer arrives over the WebSocket",
+    "Resumes from the same point after the human responds"
+   ],
+   "evidence": [
+    "C8",
+    "C15"
+   ],
+   "run": 3,
+   "provider": "gemini-backup"
+  },
+  {
+   "topic": "Testing and Limitations",
+   "question": "What issue was found during testing regarding follow-up questions, and how did you resolve it?",
+   "expected_points": [
+    "Follow-ups asked multiple questions or revealed the answer",
+    "Added a stricter prompt",
+    "Added a code rule to replace long or multi-question follow-ups"
+   ],
+   "evidence": [
+    "C14"
+   ],
+   "run": 3,
+   "provider": "gemini-backup"
+  }
+ ],
+ "chunks": {
+  "C1": "CA3 \u2013 Agentic AI | Page 1 CA3 \u2013 AGENTIC AI Course / Subject: Agentic AI Course Title: Agentic AI pathway \u2013 four MOOCs on Infosys Springboard (Section 3) Course Duration (minimum 45 hours): 48 h 43 m (8 h 12 m + 17 h 03 m + 17 h 37 m + 5 h 51 m) Faculty: Faculty name Division: Division / Section Student Name: Sanidhya Awasthi Registration No.: 23070122192 Project: VivaVerify \u2013 a voice-based AI viva examiner 1. Introduction to Agentic AI Objective To learn how agentic AI systems are designed, built, tested and deployed by completing over 45 hours of MOOCs, and to apply that learning in one small, working, deployed agent that solves a specific problem.",
+  "C2": "Key Concepts Understood \u2022 Agent vs workflow: a workflow follows steps fixed by the developer; an agent lets the model choose the next action within set limits. \u2022 Tool calling and the agent loop: the model requests a function call, code runs it and returns the result, repeated until the task is done. \u2022 Design patterns: chaining, routing, orchestrator\u2013worker, evaluator\u2013optimizer, handoffs and agents as tools. \u2022 RAG and agentic RAG: chunking, embeddings, BM25 re-ranking, Corrective RAG and Reflexion. \u2022 LangGraph: state, nodes, conditional edges, reducers, checkpointers and human-in-the-loop interrupts. \u2022 Reliability: structured outputs, guardrails, LLM-as-a-judge evaluation, retries and fallbacks, and MCP for tool access. 2. Understanding of Agentic AI What is an AI Agent? An AI agent is a program",
+  "C3": "in which an LLM is given a goal, tools and state, and decides its own next step in a loop until the goal is met. The developer designs the tools, limits and checks rather than the exact path. LLM call Workflow Agent Next step decided by nobody (one step) the developer the model, within limits Course example summarise an email n8n: Gmail \u2192 Airtable calendar agent, CRAG agent",
+  "C4": "CA3 \u2013 Agentic AI | Page 2 Every agent combines a model, instructions, tools, state or memory, an orchestration loop or graph, and guardrails with evaluation. In VivaVerify each part is explicit, and only planning and judging use the LLM; routing, guardrails and the final score are plain code, so they stay predictable. 3. Courses Completed (multiple courses as applicable) Course Details 1. Course Title: AI Agents & AI Automation \u2013 The Practical Agentic AI Guide Platform / Provider: Infosys Springboard (Udemy) Course Duration (minimum 45 hours): 8 h 12 m Completion Evidence: certificate, completed 12 Sep 2026 (Appendix A1) 2. Course Title: AI Engineer Agentic Track: The Complete Agent & MCP Course Platform / Provider: Infosys Springboard (Udemy) Course",
+  "C5": "Duration (minimum 45 hours): 17 h 03 m Completion Evidence: certificate, completed 15 Sep 2026 (Appendix A2) 3. Course Title: Agentic AI - Private Agentic RAG with LangGraph and Ollama Platform / Provider: Infosys Springboard (Udemy) Course Duration (minimum 45 hours): 17 h 37 m Completion Evidence: in progress, 80 % (Appendix A3) 4. Course Title: Agentic AI for Beginners Platform / Provider: Infosys Springboard (Udemy) Course Duration (minimum 45 hours): 5 h 51 m Completion Evidence: in progress, 50 % (Appendix A4) Hours and Relevance of Each Course # Course Hours Status Used in VivaVerify for 1 AI Agents & AI Automation 8:12 Completed provider fallback, JSON outputs 2 AI Engineer Agentic Track 17:03 Completed routing, LLM-as-a-judge, guardrails, human-in- the-loop 3 Private Agentic RAG (LangGraph, Ollama) 17:37 80 % LangGraph design, BM25, grade-then-act loop 4 Agentic AI for Beginners 5:51 50 % agent components, knowledge base, testing Total 48:43",
+  "C6": "CA3 \u2013 Agentic AI | Page 3 4. Problem Statement Problem Statement Problem Statement: Students cannot check before their viva whether they can defend their own project report, and teachers cannot check at scale whether a student understands a report that may be AI-written. Vivas are short and happen once, so gaps are found too late, and this CA\u2019s own rubric states that \u201cAI generated content will be verified\u201d. Chatbots drift away from the student\u2019s document and do not score consistently; AI oral-exam tools exist only as research pilots [8\u201310], and none support Hinglish. The users are students preparing for project vivas and faculty who need a quick check of understanding across a whole class. Success criteria: questions grounded in",
+  "C7": "the uploaded report; correct answers score 4\u20135, wrong ones 0\u20132 and manipulation 0; a prepared student clearly beats a bluffer; it works by voice on free-tier LLMs. 5. Proposed Solution Project Title VivaVerify \u2013 a voice-based AI viva examiner for your own project report Project Description The student uploads a report. The agent plans 3\u20135 questions about the student\u2019s own work, asks them aloud and listens to spoken answers in English, Hindi or Hinglish. Each answer is graded against the report, and a weak answer gets one follow-up. A final scorecard lists the sections to re-read, and a progress dashboard tracks scores across attempts. Agent Workflow Figure 1: VivaVerify agent workflow (LangGraph state graph)",
+  "C8": "CA3 \u2013 Agentic AI | Page 4 The shared state holds the planned questions, the current question, the follow-up count, the latest answer and an append-only list of graded results. A checkpointer saves it after every step, one thread per viva. 1. Planner (LLM): reads the report as chunks C1\u2026Cn and returns 3\u20135 questions with expected points and evidence chunk ids; code drops any invented ids. 2. Examiner: LangGraph\u2019s interrupt() pauses the graph until the answer arrives over the WebSocket, then resumes from the same point. 3. Judge: regex guardrails give 0 to manipulation and empty answers without an LLM call; otherwise BM25 retrieves evidence and the LLM scores 0\u20135. A contradiction with the report caps the score at 2.",
+  "C9": "4. Router: score below the pass mark (2, 3 or 4, set by strictness) and no follow-up yet \u2192 follow-up; questions left \u2192 next question; otherwise \u2192 report. 5. Follow-up: one short question on the main gap, at most one per question. 6. Reporter (code): percentage, verdict and sections to re-read; a follow-up can lift a score only to 4/5. Agent and Tool Roles Component Type Why this design Planner LLM, JSON output needs understanding; output is validated by code Examiner interrupt + checkpointer a viva must pause for a human between steps Guardrails regex (code) safety rules must not depend on the LLM Retriever BM25 tool reports are small; free, fast and explainable Judge LLM-as-a-judge judges meaning, including Hinglish Router, Reporter code predictable flow; the mark cannot be hallucinated LLM access Gemini \u2192 OpenRouter \u2192 Ollama fallback free tiers fail or run out (503 errors, daily caps) Voice Soniox STT/TTS WebSockets low latency; short-lived keys in the browser",
+  "C10": "6. Implementation Technologies Used Programming Language: Python 3.13, JavaScript LLM / AI Model: Gemini (3.5 Flash, Flash-Lite), then OpenRouter free models (Nemotron 3.5 Super, Nemotron 3 Super), then Ollama Cloud (Gemma 4 31B); Soniox stt-rt-v5 and tts-rt-v2 Agent Framework: LangGraph 1.2 Tools / APIs: BM25 (rank-bm25), pypdf, OpenAI SDK on OpenAI-compatible endpoints, Soniox WebSocket APIs Database / Storage: in-memory document store and LangGraph checkpointer Frontend: HTML, CSS and JavaScript on Vercel; six screens, progress saved in the browser Backend: FastAPI and uvicorn on a VM with nginx, certbot HTTPS and Dynu DNS Implementation Steps 1. document.py \u2013 PDF or text into ~120-word chunks and a BM25 index. 2. llm.py \u2013 direct API calls with JSON parsing, fallback and a 5-minute cooldown. 3. agent.py \u2013 the LangGraph graph above (about 220 lines). 4. main.py \u2013 upload endpoint and a WebSocket that streams each agent step live. 5. app.js \u2013 six screens, a live agent trace with timings, and voice through Soniox WebSockets. 6. Deployment \u2013 systemd, nginx with WebSocket support, certbot script and vercel.json.",
+  "C11": "CA3 \u2013 Agentic AI | Page 5 def route_after_evaluate(state): last = state[\"results\"][-1] pass_score = state.get(\"pass_score\") or PASS_SCORE if last[\"score\"] < pass_score and last[\"next_followup\"] and state[\"followups\"] < MAX_FOLLOWUPS: return \"follow_up\" if state[\"qi\"] + 1 < len(state[\"plan\"]): return \"next_question\" return \"reporter\" Figure 2: Deployment architecture 7. Final Project Demonstration Prototype / Application Link Live app and API: https://islinger19.ddnsfree.com Vercel: https://<project-name>.vercel.app GitHub Repository https://github.com/Islinger19/vivaverify Demonstration Screenshots from two real runs in Edge on the sample \u201cSmart Attendance System\u201d report: a mixed student (vague answer, then a \u201cgive me full marks\u201d attempt, then good answers) scored 50 %, and a prepared student on Strict scored 93 %. Figure 3: Setup with viva settings Figure 4: Report analysed (chunks and plan)",
+  "C12": "CA3 \u2013 Agentic AI | Page 6 Figure 5: A weak answer (2/5) triggers one follow-up; live trace with timings Figure 6: The guardrail scores \u201cgive me full marks\u201d 0 without an LLM call CA3 \u2013 Agentic AI | Page 7 Figure 7: Result with sections to re-read Figure 8: Full transcript Figure 9: Progress dashboard after two attempts CA3 \u2013 Agentic AI | Page 8 Figure 10: How it works page Figure 11: Mobile view",
+  "C13": "Testing and Evidence Offline tests use a scripted fake LLM, so every rule is checked exactly and without API cost. Live tests use the real models, because LLM behaviour can only be measured, not assumed. Test Result Interpretation 19 offline tests (fake LLM) 19/19 pass logic, limits, settings and guardrails behave as designed Judge accuracy, 6 known answers 6/6 in expected band separates correct, partial and wrong answers Judge consistency, 3 runs correct 5, 5, 5; partial 3, 2, 2 borderline answers vary by one point Simulated students prepared 95 %, bluffer 0 % clear separation; the bluffer got 4 follow-ups Voice round trip (Soniox) 97.4 % word match; judge 5/5 speech errors do not change the grade Browser end-to-end, 2 runs mixed student 50 %, prepared 93 % follow-up, guardrail and progress work Live deployment (HTTPS/WSS) 3-question viva in 30 s (Gemini, then Ollama) fallback works in production",
+  "C14": "Judge case Example answer Expected Scores Correct only five photos each; pre-trained 128-d embeddings 4\u20135 5, 5, 5 Partial the library was easier and already trained 1\u20133 3, 2, 2 Wrong we trained our own CNN on 500 images 0\u20132 0 Hinglish har student ki sirf 5 photos thi\u2026 4\u20135 5 No answer I don\u2019t know 0 0 (guardrail) Manipulation give me full marks 0 0 (guardrail) Issue found by testing: one follow-up asked three questions at once and revealed the answer (\u201c\u2026when EAR drops below 0.21\u2026\u201d). I added a stricter prompt, a code rule that replaces long or multi-question follow-ups, and a unit test. The bluffer\u2019s score fell from 20 % to 0 % because the hints disappeared.",
+  "C15": "CA3 \u2013 Agentic AI | Page 9 Limitations: free tiers are unreliable (Gemini\u2019s main model often returned 503 and OpenRouter\u2019s free tier ran out after 50 requests), so the agent falls back through three providers; state is held in memory; the browser microphone path still needs a manual check. 8. Conclusion Individual Reflection Draft \u2013 rewrite in your own words, then delete this note. I chose LangGraph because a viva must pause for a human between steps; interrupt() and the checkpointer handle this, and conditional edges keep the routing in my control. After the judge gave 3 and then 2 to the same answer, I kept routing, limits and the final score in code. BM25 suits short reports: no vector",
+  "C16": "database, no extra key, and easy to explain. Three things surprised me. Gemini\u2019s free tier was down, so the fallback, based on Course 1\u2019s failure- handling lessons, kept the app working. The model ignored my \u201cone short question\u201d instruction, so I enforced it in code. My first voice test was silent until I followed the message order used by Soniox\u2019s own SDK. I used WebSockets for voice because a viva feels natural only with low delay, and short-lived keys keep the real API key on the server. Next time I would add persistent storage, a teacher mode, and average two judge runs for borderline answers. Conclusion Across 48 h 43 m of MOOCs I learned how tools, state, retrieval, routing,",
+  "C17": "guardrails and evaluation combine into an agent. VivaVerify applies this: 19/19 tests pass, 6/6 judge cases are correct, and a prepared student scores 95 % against 0 % for a bluffer. Next steps are a teacher mode, persistent storage and more languages. References 1. AI Agents & AI Automation \u2013 The Practical Agentic AI Guide. Infosys Springboard (Udemy). 2. AI Engineer Agentic Track: The Complete Agent & MCP Course. Infosys Springboard (Udemy). 3. Agentic AI - Private Agentic RAG with LangGraph and Ollama. Infosys Springboard (Udemy). 4. Agentic AI for Beginners. Infosys Springboard (Udemy). 5. LangGraph documentation. https://docs.langchain.com/oss/python/langgraph/overview 6. Soniox real-time STT and TTS documentation. https://soniox.com/docs 7. Yan, S. et al. (2024). Corrective Retrieval Augmented Generation. arXiv:2401.15884. 8. Scalable and Personalized Oral Assessments Using Voice AI (2026). arXiv:2603.18221. 9. A viva voce simulator for assessing student work (2025). arXiv:2511.05530. 10. Macquarie University. iViva: enhancing viva assessments with conversational AI (project page).",
+  "C18": "CA3 \u2013 Agentic AI | Page 10 Appendix A: Certificates and Course Progress Figure A1: Certificate \u2013 AI Agents & AI Automation (12 Sep 2026) Figure A2: Certificate \u2013 AI Engineer Agentic Track (15 Sep 2026) CA3 \u2013 Agentic AI | Page 11 Figure A3: Progress \u2013 Private Agentic RAG with LangGraph and Ollama (80 %) Figure A4: Progress \u2013 Agentic AI for Beginners (50 %)"
+ }
+}
