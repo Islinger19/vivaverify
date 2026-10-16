@@ -22,7 +22,7 @@ planner -> examiner -> judge -> follow_up     -> examiner   (score < 3, max one 
 | Judge (LLM) | Scores 0-5 against the expected points; any contradiction with the report caps the score at 2 |
 | Router | Conditional edge: follow-up, next question, or final report |
 | Reporter | Deterministic scoring (follow-up recovery capped at 4/5), verdict and "re-read" excerpts |
-| LLM access | Direct calls to Gemini, then OpenRouter (OpenAI-compatible APIs); failing providers cool down for 5 min |
+| LLM access | Direct calls to Groq, then Gemini, then OpenRouter (all OpenAI-compatible APIs); failing providers cool down for 5 min |
 | Voice | Browser talks directly to Soniox real-time STT/TTS WebSockets with short-lived keys from the backend |
 
 ## Screens
@@ -50,6 +50,7 @@ Open http://localhost:8000 (FastAPI also serves `frontend/` locally).
 .venv/Scripts/python eval/run_eval.py        # live judge accuracy + simulated students (~25 LLM calls)
 .venv/Scripts/python eval/voice_roundtrip.py # one Soniox TTS -> STT -> judge round trip
 python eval/ui_demo.py                       # two real vivas in Edge, screenshots of every screen (server must run)
+.venv/Scripts/python eval/smoke_live.py URL  # 3-question viva against a deployed backend (~4 LLM calls)
 ```
 
 Results are saved in `backend/eval/` (`results.md`, `results.json`, `voice_roundtrip.json`, `screenshots/`).
@@ -72,8 +73,10 @@ script -q -f -c "uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-heade
 # Ctrl+B then D to detach; tmux attach -t fastapi to come back
 ```
 
-To update: `cd ~/vivaverify && git pull`, then restart uvicorn inside the tmux session (`pip install -r
-requirements.txt` first if dependencies changed). Keep one worker: documents and sessions live in memory.
+To update: `cd ~/vivaverify && git pull`, then restart: stop the old server first (Ctrl+C inside the tmux session,
+or `pkill -f "uvicorn app.main:app"` - killing the tmux session alone leaves uvicorn running under `script`), then start
+it again as above (`pip install -r requirements.txt` first if dependencies changed). Check it with
+`.venv/Scripts/python eval/smoke_live.py https://islinger19.ddnsfree.com` from a dev machine. Keep one worker: documents and sessions live in memory.
 `backend/deploy/setup_vm.sh` is an alternative one-shot setup that uses systemd instead of tmux.
 
 **Frontend - Vercel:** import this repository, set **Root Directory** to `frontend`, Framework Preset **Other**, no build
