@@ -194,20 +194,20 @@ function setAnswering(on) {
   $("micBtn").disabled = !on || !keys;
 }
 
-function evalCard(e) {
+function evalCard(e, showMissing = true) {
   const list = (title, items) => items && items.length ? `<div><b>${title}:</b> ${items.map(esc).join("; ")}</div>` : "";
   return `<div class="eval s${e.score}">
     <div class="eval-head"><span class="score">${e.score}/5</span>
       <span>Q${e.index}${e.followup ? " follow-up" : ""} - ${esc(e.topic)}</span>
       ${e.flag ? `<span class="chip warn">${esc(e.flag)}</span>` : ""}</div>
     <p>${esc(e.feedback)}</p>
-    ${list("Covered", e.covered)}${list("Missing", e.missing)}${list("Conflicts with your report", e.contradictions)}
+    ${list("Covered", e.covered)}${showMissing ? list("Missing", e.missing) : ""}${list("Conflicts with your report", e.contradictions)}
   </div>`;
 }
 
 function showEvaluation(e) {
   session.evaluations.push(e);
-  $("evals").insertAdjacentHTML("afterbegin", evalCard(e));
+  $("evals").insertAdjacentHTML("afterbegin", evalCard(e, false));   // hide solution/missing on the question screen
   renderDots();
 }
 
@@ -230,12 +230,14 @@ function showReport(r) {
       <div class="rrow-head"><span class="score">${q.score}/5</span><b>${esc(q.topic)}</b>
         ${q.followup_used ? '<span class="chip warn">needed a follow-up</span>' : ""}</div>
       <p class="muted">${esc(q.question)}</p>
+      ${q.missing.length ? `<div><b>Missing:</b> ${q.missing.map(esc).join("; ")}</div>` : ""}
+      ${q.reread.map((c) => `<blockquote><b>Re-read [${c.id}]</b> ${esc(c.excerpt)}</blockquote>`).join("")}
     </div>`).join("");
   $("rTranscript").innerHTML = session.evaluations.map((e) => `
     <div class="turn">
       <div class="who examiner">Examiner${e.followup ? " (follow-up)" : ""}</div><p>${esc(e.question)}</p>
       <div class="who student">You</div><p>${esc(e.answer) || '<span class="muted">(no answer)</span>'}</p>
-      ${evalCard(e)}
+      ${evalCard(e, true)}
     </div>`).join("");
   saveImprovement(r);
 }
