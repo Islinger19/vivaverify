@@ -49,7 +49,7 @@ def test_fallback_skips_failing_providers_and_cools_them_down(monkeypatch):
 
     monkeypatch.setattr(llm, "OpenAI", FakeOpenAI)
     monkeypatch.setattr(llm, "_down_until", {})
-    for var in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"):
+    for var in ("GEMINI_API_KEY", "OPENROUTER_API_KEY", "OLLAMA_API_KEY"):
         monkeypatch.setenv(var, "x")
 
     assert llm.chat_json("s", "u") == ({"ok": True}, "openrouter")
