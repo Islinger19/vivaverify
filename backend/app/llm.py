@@ -26,7 +26,9 @@ def providers() -> list[dict]:
         {"name": "gemini", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
          "key": os.getenv("GEMINI_API_KEY"), "model": os.getenv("GEMINI_MODEL", "gemini-flash-latest"), "timeout": 25},
         {"name": "openrouter", "base_url": openrouter, "key": os.getenv("OPENROUTER_API_KEY"),
-         "model": os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"), "timeout": 60},
+         "model": os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3.5-super-vl:free"), "timeout": 60},
+        {"name": "openrouter-backup", "base_url": openrouter, "key": os.getenv("OPENROUTER_API_KEY"),
+         "model": os.getenv("OPENROUTER_BACKUP_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"), "timeout": 60},
         {"name": "openrouter-auto", "base_url": openrouter, "key": os.getenv("OPENROUTER_API_KEY"),
          "model": "openrouter/free", "timeout": 60},
     ]
