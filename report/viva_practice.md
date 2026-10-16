@@ -69,10 +69,17 @@ Say: *“I’ll give a deliberately vague answer to show how the examiner follow
 - If asked: “Why did you use BM25 instead of a vector database for retrieval in VivaVerify?”
 - Vague answer: “Because BM25 is a good algorithm and it works well for this project.” → judge gave **1/5**, below the pass mark of 3
 - The app then asked: “What specific characteristics of the reports made BM25 a suitable choice?”
-- Now answer properly (answer 2 above). It should score 4–5, and the question’s final score is capped at **4/5** because a follow-up was needed – point this out, it shows the deterministic reporter.
+- The card under the question shows only the score and a short note, not the missing points – point this out: the
+  feedback must not give away the follow-up’s answer, so the full feedback only appears in the result.
+- Now answer properly (answer 2 above). The follow-up is graded together with your first answer, so it should score
+  4–5, and the question’s final score is capped at **4/5** because a follow-up was needed – point this out, it shows
+  the deterministic reporter.
 - If a different question comes first, any one-line vague answer works the same way.
 
 ## Tips
 - Don’t quote attack phrases (like asking the examiner for top marks) when explaining the guardrails – describe them instead.
+- If asked what you fixed after testing: the live feedback named the missing points, so a student could read the
+  follow-up’s answer off the screen; now only the score and a note are sent during the viva. A follow-up is graded
+  together with the first answer, short correct answers reach the judge, and a failed LLM call can be retried.
 - Answer in 2–4 full sentences: the reason, how it works in your code, and one number or result from your report.
-- Numbers worth knowing: 48 h 43 m of courses; 22/22 offline tests; 6/6 judge cases; prepared 95 % vs bluffer 0 %; judge consistency 5,5,5 and 3,2,2; voice 97.4 % word match, first audio 1.6 s; follow-up limit 1; pass marks 2/3/4; scores capped at 4/5 after a follow-up.
+- Numbers worth knowing: 48 h 43 m of courses; 33/33 offline tests; 6/6 judge cases; prepared 95 % vs bluffer 0 %; judge consistency 5,5,5 and 3,2,2; voice 97.4 % word match, first audio 1.6 s; follow-up limit 1; pass marks 2/3/4; scores capped at 4/5 after a follow-up.

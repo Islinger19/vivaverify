@@ -321,10 +321,13 @@ c.numbered([
     "**Examiner:** LangGraph’s interrupt() pauses the graph until the answer arrives over the WebSocket, then resumes "
     "from the same point.",
     "**Judge:** regex guardrails give 0 to manipulation and empty answers without an LLM call; otherwise BM25 "
-    "retrieves evidence and the LLM scores 0–5. A contradiction with the report caps the score at 2.",
+    "retrieves evidence and the LLM scores 0–5. A contradiction with the report caps the score at 2. During the "
+    "viva the student sees only the score and a neutral note; the missing points and feedback arrive with the "
+    "final report, so they cannot give away the follow-up’s answer.",
     "**Router:** score below the pass mark (2, 3 or 4, set by strictness) and no follow-up yet → follow-up; "
     "questions left → next question; otherwise → report.",
-    "**Follow-up:** one short question on the main gap, at most one per question.",
+    "**Follow-up:** one short question on the main gap, at most one per question. The reply is graded together "
+    "with the first answer, so filling the gap can raise the score.",
     "**Reporter (code):** percentage, verdict and sections to re-read; a follow-up can lift a score only to 4/5.",
 ])
 c.h2("Agent and Tool Roles")
@@ -358,7 +361,7 @@ c = after("Implementation Steps")
 c.numbered([
     "**document.py** – PDF or text into ~120-word chunks and a BM25 index.",
     "**llm.py** – direct API calls with JSON parsing, fallback and a 5-minute cooldown.",
-    "**agent.py** – the LangGraph graph above (about 220 lines).",
+    "**agent.py** – the LangGraph graph above (about 310 lines).",
     "**main.py** – upload endpoint and a WebSocket that streams each agent step live.",
     "**app.js** – six screens, a live agent trace with timings, and voice through Soniox WebSockets.",
     "**Deployment** – systemd, nginx with WebSocket support, certbot script and vercel.json.",
@@ -396,7 +399,7 @@ c.p("Offline tests use a scripted fake LLM, so every rule is checked exactly and
     "real models, because LLM behaviour can only be measured, not assumed.")
 c.table([
     ["Test", "Result", "Interpretation"],
-    ["22 offline tests (fake LLM)", "22/22 pass", "logic, limits, settings and guardrails behave as designed"],
+    ["33 offline tests (fake LLM)", "33/33 pass", "logic, limits, settings, guardrails and retry behave as designed"],
     ["Judge accuracy, 6 known answers", "6/6 in expected band", "separates correct, partial and wrong answers"],
     ["Judge consistency, 3 runs", "correct 5, 5, 5; partial 3, 2, 2", "borderline answers vary by one point"],
     ["Simulated students", "prepared 95 %, bluffer 0 %", "clear separation; the bluffer got 4 follow-ups"],
@@ -416,6 +419,12 @@ c.table([
 c.p("**Issue found by testing:** one follow-up asked three questions at once and revealed the answer (“…when EAR "
     "drops below 0.21…”). I added a stricter prompt, a code rule that replaces long or multi-question follow-ups, and "
     "a unit test. The bluffer’s score fell from 20 % to 0 % because the hints disappeared.")
+c.p("**Issues found in a later review:** the feedback shown during the viva named the missing points, so a "
+    "student could read the follow-up’s answer off the screen (and in the browser’s developer tools). A "
+    "follow-up reply was also graded against every expected point, so it could rarely raise the score, and a "
+    "short correct reply such as “blink detection” was rejected as no answer. Now only the score and a neutral "
+    "note are sent during the viva, the follow-up is graded together with the first answer, short answers reach "
+    "the judge, and a failed LLM call can be retried without losing the viva. New unit tests cover each fix.")
 c.p("**Limitations:** free tiers are unreliable (Gemini’s main model often returned 503 and OpenRouter’s free tier "
     "ran out after 50 requests), so the agent falls back through three providers; state is held in memory; the "
     "browser microphone path still needs a manual check.")
@@ -436,7 +445,7 @@ c.p("Three things surprised me. Gemini’s free tier was down, so the fallback, 
     "add persistent storage, a teacher mode, and average two judge runs for borderline answers.")
 c.h2("Conclusion")
 c.p("Across 48 h 43 m of MOOCs I learned how tools, state, retrieval, routing, guardrails and evaluation combine into "
-    "an agent. VivaVerify applies this: 22/22 tests pass, 6/6 judge cases are correct, and a prepared student scores "
+    "an agent. VivaVerify applies this: 33/33 tests pass, 6/6 judge cases are correct, and a prepared student scores "
     "95 % against 0 % for a bluffer. Next steps are a teacher mode, persistent storage and more languages.")
 c.h2("References")
 c.numbered([
