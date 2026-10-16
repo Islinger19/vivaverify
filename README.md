@@ -46,7 +46,7 @@ Open http://localhost:8000 (FastAPI also serves `frontend/` locally).
 ## Tests and evaluation
 
 ```bash
-.venv/Scripts/python -m pytest -q            # 19 offline tests, fake LLM, no API calls
+.venv/Scripts/python -m pytest -q            # 20 offline tests, fake LLM, no API calls
 .venv/Scripts/python eval/run_eval.py        # live judge accuracy + simulated students (~25 LLM calls)
 .venv/Scripts/python eval/voice_roundtrip.py # one Soniox TTS -> STT -> judge round trip
 python eval/ui_demo.py                       # two real vivas in Edge, screenshots of every screen (server must run)
