@@ -203,7 +203,7 @@ set_text(find("Faculty:"), "Faculty: Nilima Zade")
 division = find("Division:")
 set_text(division, "Division: C")
 c = Cursor(division)
-c.p("Student Name: Sanidhya Awasthi        Registration No.: 23070122192")
+c.p("Student Name: Sanidhya Awasthi        PRN: 23070122192")
 c.p("Project: **VivaVerify – a voice-based AI viva examiner**")
 
 # ---------------------------------------------------------------- 1. Introduction
