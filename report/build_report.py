@@ -199,7 +199,7 @@ def after(prefix):
 set_text(find("Course Title:"), "Course Title: Agentic AI pathway – four MOOCs on Infosys Springboard (Section 3)")
 set_text(find("Course Duration (minimum 45 hours):"),
          "Course Duration (minimum 45 hours): **48 h 43 m** (8 h 12 m + 17 h 03 m + 17 h 37 m + 5 h 51 m)")
-set_text(find("Faculty:"), "Faculty: [[Faculty name]]")
+set_text(find("Faculty:"), "Faculty: Nilima Zade")
 division = find("Division:")
 set_text(division, "Division: [[Division / Section]]")
 c = Cursor(division)
@@ -378,7 +378,7 @@ c.image("architecture.png", 6.0, "Figure 2: Deployment architecture")
 
 # ---------------------------------------------------------------- 7. Demonstration and testing
 set_text(find("_____", start_after=find("Prototype / Application Link")),
-         "Live app and API: https://islinger19.ddnsfree.com   Vercel: [[https://<project-name>.vercel.app]]")
+         "Live app and API: https://islinger19.ddnsfree.com   Vercel: https://vivaverify.vercel.app")
 set_text(find("_____", start_after=find("GitHub Repository")), "https://github.com/Islinger19/vivaverify")
 
 c = after("Demonstration")

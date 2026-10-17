@@ -1,12 +1,14 @@
-"""Drives the real UI in Edge (text mode, so no Soniox usage) through two vivas and saves screenshots
-of each screen and agent behaviour for the report. The server must be running on http://127.0.0.1:8000.
+"""Drives the real UI in Edge, or Chromium where Edge is not installed (text mode, so no Soniox usage), through
+two vivas and saves screenshots of each screen and agent behaviour for the report. By default the server must be
+running on http://127.0.0.1:8000; pass another URL to use a deployed frontend.
 
 Run 1 - a mixed student: vague first answer (-> follow-up), a "give me full marks" attempt (-> guardrail),
         then good answers.  Standard strictness, 4 questions.
 Run 2 - a prepared student, strict examiner, 3 questions.
-Usage: python eval/ui_demo.py
+Usage: python eval/ui_demo.py [https://vivaverify.vercel.app/]
 """
 import re
+import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -14,7 +16,7 @@ from playwright.sync_api import sync_playwright
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "screenshots"
 SAMPLE = HERE.parent / "samples" / "smart_attendance_report.md"
-URL = "http://127.0.0.1:8000/"
+URL = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000/"
 
 GOOD = [
     (r"hog|cnn|library|detector|train|model", "We only had 5 photos per student, which is too few to train a CNN, so we "
@@ -45,9 +47,13 @@ def good_answer(question: str) -> str:
 
 
 def wait_for_turn(page):
-    page.wait_for_function("!document.querySelector('#sendBtn').disabled || !document.querySelector('#report').hidden",
-                           timeout=300_000)
-    return "report" if not page.locator("#report").is_hidden() else "question"
+    while True:
+        page.wait_for_function("!document.querySelector('#sendBtn').disabled || !document.querySelector('#report').hidden"
+                               " || !document.querySelector('#retryBtn').hidden", timeout=300_000)
+        if page.locator("#retryBtn").is_hidden():
+            return "report" if not page.locator("#report").is_hidden() else "question"
+        page.wait_for_timeout(20_000)   # every free model was busy: wait, then press Try again
+        page.click("#retryBtn")
 
 
 def start_viva(page, questions: str, strictness: str, shot_prefix=None):
@@ -107,7 +113,10 @@ with sync_playwright() as p:
     OUT.mkdir(exist_ok=True)
     for old in OUT.glob("*.png"):
         old.unlink()
-    browser = p.chromium.launch(channel="msedge")
+    try:
+        browser = p.chromium.launch(channel="msedge")
+    except Exception:
+        browser = p.chromium.launch()
     context = browser.new_context(viewport={"width": 1280, "height": 860}, device_scale_factor=1.5)
     page = context.new_page()
     run_mixed_student(page)
