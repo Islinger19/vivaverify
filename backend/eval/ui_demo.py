@@ -19,6 +19,11 @@ SAMPLE = HERE.parent / "samples" / "smart_attendance_report.md"
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000/"
 
 GOOD = [
+    (r"toleran|false.accept|threshold|similar.looking", "The default tolerance of 0.6 confused two pairs of similar-looking "
+     "students in our trial, so we lowered it to 0.5 to make matching stricter. In testing the false-accept rate, marking "
+     "the wrong student, was only 1.2 percent, so the stricter threshold kept wrong matches rare."),
+    (r"enrol|stor|npy|privacy|raw photo", "Enrollment is done once: each student gives 5 photos, their embeddings are "
+     "averaged and saved as a NumPy .npy file, so raw photos are never stored on the device. Attendance goes into SQLite."),
     (r"hog|cnn|library|detector|train|model", "We only had 5 photos per student, which is too few to train a CNN, so we "
      "used face_recognition, which gives pre-trained 128-d embeddings and compares them by nearest neighbour. HOG was "
      "chosen because it runs in real time on the Raspberry Pi CPU while the CNN detector took over 3 seconds per frame."),
@@ -92,6 +97,7 @@ def run_mixed_student(page):
             answer = good_answer(question)
         page.fill("#answer", answer)
         page.click("#sendBtn")
+    print("mixed student:", page.inner_text("#rPercent"), "-", page.inner_text("#rVerdict"))
     page.screenshot(path=str(OUT / "05_result_summary.png"), full_page=True)
     page.click(".tabs button[data-tab='rTranscript']")
     page.screenshot(path=str(OUT / "06_result_transcript.png"), full_page=True)
@@ -105,6 +111,7 @@ def run_prepared_student(page):
     while wait_for_turn(page) == "question":
         page.fill("#answer", good_answer(page.inner_text("#qText")))
         page.click("#sendBtn")
+    print("prepared student:", page.inner_text("#rPercent"), "-", page.inner_text("#rVerdict"))
     page.click(".nav button[data-nav='how']")
     page.screenshot(path=str(OUT / "08_how_it_works.png"), full_page=True)
 

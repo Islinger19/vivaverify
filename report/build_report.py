@@ -201,7 +201,7 @@ set_text(find("Course Duration (minimum 45 hours):"),
          "Course Duration (minimum 45 hours): **48 h 43 m** (8 h 12 m + 17 h 03 m + 17 h 37 m + 5 h 51 m)")
 set_text(find("Faculty:"), "Faculty: Nilima Zade")
 division = find("Division:")
-set_text(division, "Division: [[Division / Section]]")
+set_text(division, "Division: C")
 c = Cursor(division)
 c.p("Student Name: Sanidhya Awasthi        Registration No.: 23070122192")
 c.p("Project: **VivaVerify – a voice-based AI viva examiner**")
@@ -383,7 +383,7 @@ set_text(find("_____", start_after=find("GitHub Repository")), "https://github.c
 
 c = after("Demonstration")
 c.p("Figures 3–10 show the six screens in order, from real runs in Edge on the sample report. A mixed student (vague "
-    "answer, a “give me full marks” attempt, then good answers) scored 35 %.")
+    "answer, a “give me full marks” attempt, then good answers) scored 60 %; a prepared student on Strict scored 67 %.")
 c.images_side_by_side([("ui_01_setup.png", "Figure 3: Setup with viva settings", 2.15),
                        ("ui_02_analysed.png", "Figure 4: Report analysed", 2.9)], 3.2)
 c.image("ui_03_followup.png", 4.6, "Figure 5: A weak answer (2/5) triggers one follow-up")
@@ -404,7 +404,7 @@ c.table([
     ["Judge consistency, 3 runs", "correct 5, 5, 5; partial 3, 2, 2", "borderline answers vary by one point"],
     ["Simulated students", "prepared 95 %, bluffer 0 %", "clear separation; the bluffer got 4 follow-ups"],
     ["Voice round trip (Soniox)", "97.4 % word match; judge 5/5", "speech errors do not change the grade"],
-    ["Browser end-to-end, 2 runs", "mixed student 35 %, prepared student completed", "follow-up, guardrail and How to improve work"],
+    ["Browser end-to-end, 2 runs", "mixed student 60 %, prepared 67 % (Strict)", "follow-up, guardrail and How to improve work"],
     ["Live deployment (HTTPS/WSS)", "3-question viva in 30 s (Gemini, then Ollama)", "fallback works in production"],
 ], [2.0, 2.15, 2.5])
 c.table([
