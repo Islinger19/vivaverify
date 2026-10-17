@@ -133,7 +133,7 @@ class Cursor:
             par.paragraph_format.keep_with_next = True   # never separate a figure from its caption
             self.p(caption, "Caption", align=WD_ALIGN_PARAGRAPH.CENTER)
 
-    def table(self, rows, widths, header=True, size=8.5, shade="DCE6F1"):
+    def table(self, rows, widths, header=True, size=8.5, shade="E7E6E6"):
         t = doc.add_table(rows=len(rows), cols=len(rows[0]))
         t.style = doc.styles["Table Grid"]
         t.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -162,7 +162,7 @@ class Cursor:
         cell = t.cell(0, 0)
         shd = OxmlElement("w:shd")
         shd.set(qn("w:val"), "clear")
-        shd.set(qn("w:fill"), "F3F4F8")
+        shd.set(qn("w:fill"), "F2F2F2")
         cell._tc.get_or_add_tcPr().append(shd)
         cell.paragraphs[0]._p.getparent().remove(cell.paragraphs[0]._p)
         for line in text.split("\n"):
